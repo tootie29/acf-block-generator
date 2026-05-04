@@ -191,24 +191,18 @@ $use_global_settings = (bool) get_field( 'use_global_settings' );`
     ? `$bg_color = get_field( 'bg_color' );`
     : ''
 
-  // Determine if there is a "heading"-named field (special-cased to use $heading_tag)
-  const headingField = fields.find((f) => f.name === 'heading' && (f.type === 'text' || f.type === 'textarea'))
-
-  // Content output — special-case heading field to use $heading_tag
-  const contentOutput = fields
-    .map((f) => {
-      if (f === headingField) {
-        const cls = `${slug}__heading`
-        return `      <?php if ( $${f.name} ) : ?>
-        <<?php echo $heading_tag; ?> class="${cls}">
-          <?php echo esc_html( $${f.name} ); ?>
-        </<?php echo $heading_tag; ?>>
-      <?php endif; ?>`
-      }
-      // Push image fields outside of the content wrapper if first one
-      return renderFieldOutput(f, slug, 3, { isHero })
-    })
-    .join('\n\n')
+  // The FIRST field whose name contains "title" is treated as the block's
+  // main title and rendered inside a heading tag. Tag is determined by
+  // $heading_tag at runtime: h1 for hero blocks, h2 for inner blocks, or
+  // toggleable via the "Possible Hero Section" true_false field. Limited
+  // to text/textarea field types — wysiwyg / image / link don't make sense
+  // wrapped in <h1>.
+  const headingField = fields.find(
+    (f) =>
+      typeof f.name === 'string' &&
+      f.name.toLowerCase().includes('title') &&
+      (f.type === 'text' || f.type === 'textarea'),
+  )
 
   // All fields render inside .{slug}__inner, in source order. Each field has
   // its own empty-check, so empty fields produce no markup. The inner wrapper
