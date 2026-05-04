@@ -1,14 +1,16 @@
-// Generate a BEM-scaffolded stylesheet.css using the agency's global CSS
-// variables AND the canonical typography token scale (sourced from the
-// agency Figma file). Typography vars are scoped to the block's root
-// selector (.{slug}) so each block carries its own copy without polluting
-// :root or affecting other blocks / the rest of the page.
-// Mobile breakpoint is fixed at max-width 767px.
+// Generates stylesheet.css scaffold for an ACF block.
+//
+// Conventions enforced here:
+//   - All custom CSS variables are scoped to .{slug} (block-local).
+//   - Breakpoints are max-width cascade, desktop-first. Each later
+//     breakpoint overrides the earlier ones for properties that change.
+//   - WYSIWYG vertical-rhythm rules are scoped to .{slug} so they don't
+//     leak to other blocks or to header / footer / sidebar regions.
 
 export function generateBlockCss(schema) {
   const { slug, fields, options } = schema
 
-  // Pull element selectors from fields for stub blocks
+  // Per-field BEM stubs (one selector per unique field, deduped)
   const elementSelectors = fields
     .map((f) => `.${slug}__${f.name.replace(/_/g, '-')}`)
     .filter((sel, i, arr) => arr.indexOf(sel) === i)
@@ -21,23 +23,33 @@ export function generateBlockCss(schema) {
  * Block: ${slug}
  * BEM root: .${slug}
  *
- * Uses agency global CSS variables:
- *   --primary-color, --secondary-color, --tertiary-color,
+ * ──── Layout contract ─────────────────────────────────────────────
+ *   body              100% width, max-width 1920px (set globally in theme)
+ *   .${slug}              section, always 100% width; padding scales w/ breakpoint
+ *   .${slug}__inner       always 100% width; flex column; gap 60px
+ *
+ * ──── Breakpoints (max-width, desktop-first cascade) ──────────────
+ *   Desktop          ≥ 1280px  (default values)
+ *   Small desktop    ≤ 1279px
+ *   Tablet           ≤ 1024px
+ *   Mobile           ≤ 767px  (also overrides typography tokens)
+ *
+ * ──── Typography ──────────────────────────────────────────────────
+ *   Tokens --font-size-h1..h6, --font-size-par/button/label and
+ *   matching --line-height-* are declared on .${slug} so they cascade
+ *   only inside this block. Mobile redefines them inside the ≤ 767px
+ *   media query — no per-element font-size overrides needed.
+ *
+ * ──── Global vars expected from theme ─────────────────────────────
+ *   --primary-color, --secondary-color, --tertiary-color
  *   --heading-font, --paragraph-font
- *
- * Typography tokens (declared on .${slug}) follow the agency Figma scale.
- * They are scoped to this block — won't leak outside .${slug}.
- *
- * Layout contract (agency standard):
- *   - body is 100% width with max-width 1920px (set globally in the theme)
- *   - section (.${slug}) is always 100% width
- *   - section padding scales: 100px 6% (default desktop ≥ 1280px),
- *     80px 60px (≤ 1279px), 60px 40px (≤ 1024px), 40px 20px (≤ 767px)
- *   - .${slug}__inner is always 100% width, flex column, gap 60px
  */
 
+/* ═══════════════════════════════════════════════════════════════════
+ * 1 · Block root — typography tokens + layout
+ * ═══════════════════════════════════════════════════════════════════ */
 .${slug} {
-  /* ── Typography scale (block-scoped) ──────────────────────────────────── */
+  /* Typography scale (block-scoped) */
   --font-size-h1: 50px;     --line-height-h1: 60px;
   --font-size-h2: 44px;     --line-height-h2: 56px;
   --font-size-h3: 36px;     --line-height-h3: 48px;
@@ -48,7 +60,7 @@ export function generateBlockCss(schema) {
   --font-size-button: 20px; --line-height-button: 20px;
   --font-size-label: 16px;  --line-height-label: 24px;
 
-  /* ── Block layout ─────────────────────────────────────────────────────── */
+  /* Layout */
   width: 100%;
   box-sizing: border-box;
   position: relative;
@@ -65,6 +77,9 @@ export function generateBlockCss(schema) {
   box-sizing: border-box;
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+ * 2 · Inner wrapper — flex column with consistent gap
+ * ═══════════════════════════════════════════════════════════════════ */
 .${slug}__inner {
   width: 100%;
   display: flex;
@@ -72,6 +87,12 @@ export function generateBlockCss(schema) {
   gap: 60px;
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+ * 3 · Default heading style
+ *      .${slug}__heading is applied to the first field whose name
+ *      contains "title". Wrapping tag is dynamic ($heading_tag): h1
+ *      for hero blocks, h2 for inner blocks.
+ * ═══════════════════════════════════════════════════════════════════ */
 .${slug}__heading {
   font-family: var(--heading-font, inherit);
   font-size: var(--font-size-h1);
@@ -80,6 +101,7 @@ export function generateBlockCss(schema) {
   color: var(--primary-color, #111);
 }
 
+/* Image reset */
 .${slug} img {
   max-width: 100%;
   height: auto;
@@ -87,9 +109,16 @@ export function generateBlockCss(schema) {
   object-fit: cover;
 }
 
-${elementStubs}
+/* ═══════════════════════════════════════════════════════════════════
+ * 4 · Per-field BEM stubs — fill in styles for each ACF field
+ * ═══════════════════════════════════════════════════════════════════ */
+${elementStubs || '/* No custom fields yet — stubs will appear here. */'}
 
-/* ---- WYSIWYG content vertical rhythm (scoped to .${slug}) ---- */
+/* ═══════════════════════════════════════════════════════════════════
+ * 5 · WYSIWYG vertical rhythm (scoped to .${slug})
+ *      Headings: 32px top, 0 bottom · :first-child resets to 0
+ *      Body elements: 16px top, 0 bottom · :first-child resets to 0
+ * ═══════════════════════════════════════════════════════════════════ */
 .${slug} .wysiwyg--content h1,
 .${slug} .wysiwyg--content h2,
 .${slug} .wysiwyg--content h3,
@@ -139,21 +168,46 @@ ${elementStubs}
   margin-top: 0;
 }
 
-/* ---- ≤ 1279px ---- */
+/* ═══════════════════════════════════════════════════════════════════
+ * 6 · Gutenberg align-wide / align-full
+ * ═══════════════════════════════════════════════════════════════════ */
+.${slug}.alignwide,
+.${slug}.alignfull {
+  max-width: unset;
+  margin-left: unset;
+  margin-right: unset;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * 7 · Editor-only overrides (block-editor iframe / preview)
+ * ═══════════════════════════════════════════════════════════════════ */
+.editor-styles-wrapper .${slug} {
+  /* Prevent editor chrome from bleeding into block layout */
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * 8 · Responsive — Small desktop (≤ 1279px)
+ * ═══════════════════════════════════════════════════════════════════ */
 @media (max-width: 1279px) {
   .${slug} {
     padding: 80px 60px;
   }
 }
 
-/* ---- ≤ 1024px ---- */
+/* ═══════════════════════════════════════════════════════════════════
+ * 9 · Responsive — Tablet (≤ 1024px)
+ * ═══════════════════════════════════════════════════════════════════ */
 @media (max-width: 1024px) {
   .${slug} {
     padding: 60px 40px;
   }
 }
 
-/* ---- ≤ 767px (mobile) ---- */
+/* ═══════════════════════════════════════════════════════════════════
+ * 10 · Responsive — Mobile (≤ 767px)
+ *       Also redefines typography tokens inside .${slug} so any
+ *       descendant using var(--font-size-h2) etc. responds automatically.
+ * ═══════════════════════════════════════════════════════════════════ */
 @media (max-width: 767px) {
   .${slug} {
     /* Typography overrides */
@@ -164,24 +218,11 @@ ${elementStubs}
     --font-size-h5: 20px;   --line-height-h5: 28px;
     --font-size-h6: 16px;   --line-height-h6: 24px;
     --font-size-par: 16px;  --line-height-par: 24px;
-    /* button + label intentionally not overridden — same on both breakpoints */
+    /* button + label intentionally not overridden */
 
     /* Layout */
     padding: 40px 20px;
   }
-}
-
-/* ---- Align overrides ---- */
-.${slug}.alignwide,
-.${slug}.alignfull {
-  max-width: unset;
-  margin-left: unset;
-  margin-right: unset;
-}
-
-/* ---- Editor-only overrides ---- */
-.editor-styles-wrapper .${slug} {
-  /* Prevent editor chrome bleeding into block layout */
 }
 `
 }
