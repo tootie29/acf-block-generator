@@ -20,8 +20,13 @@ ${pad}<?php endif; ?>`
 ${pad}  <p class="${cls}"><?php echo nl2br( esc_html( $${field.name} ) ); ?></p>
 ${pad}<?php endif; ?>`
     case 'wysiwyg':
+      // WYSIWYG output is always wrapped in .wysiwyg--content so site-wide
+      // content styles (paragraph spacing, list bullets, link colors, etc.)
+      // apply consistently regardless of which block it lives in.
       return `${pad}<?php if ( $${field.name} ) : ?>
-${pad}  <div class="${cls}"><?php echo wp_kses_post( $${field.name} ); ?></div>
+${pad}  <div class="wysiwyg--content">
+${pad}    <?php echo wp_kses_post( $${field.name} ); ?>
+${pad}  </div>
 ${pad}<?php endif; ?>`
     case 'number':
     case 'url':
