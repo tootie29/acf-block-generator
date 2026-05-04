@@ -210,29 +210,11 @@ $use_global_settings = (bool) get_field( 'use_global_settings' );`
     })
     .join('\n\n')
 
-  // $has_content flag — checks every non-image text-ish field
-  const contentChecks = fields
-    .filter((f) => !['image', 'gallery'].includes(f.type))
-    .map((f) => {
-      if (f.type === 'link') return `( $${f.name} && ! empty( $${f.name}['url'] ) )`
-      if (f.type === 'repeater') return `have_rows( '${f.name}' )`
-      return `$${f.name}`
-    })
-    .join(' || ')
-
-  const hasContentFlag = contentChecks
-    ? `$has_content = ${contentChecks};`
-    : `$has_content = false;`
-
-  // Identify image fields for the media block (rendered above content wrapper)
-  const imageFields = fields.filter((f) => f.type === 'image')
-  const nonImageFields = fields.filter((f) => f.type !== 'image')
-
-  const mediaBlock = imageFields
-    .map((f) => renderFieldOutput(f, slug, 1, { isHero }))
-    .join('\n\n')
-
-  const contentBlock = nonImageFields
+  // All fields render inside .{slug}__inner, in source order. Each field has
+  // its own empty-check, so empty fields produce no markup. The inner wrapper
+  // is always rendered (per agency layout contract: section always has __inner
+  // with width 100%, flex column, gap 60px).
+  const innerBlock = fields
     .map((f) => {
       if (f === headingField) {
         const cls = `${slug}__heading`
@@ -278,23 +260,16 @@ if ( ! empty( $block['align'] ) ) {
 
 ${globalToggleSetup ? globalToggleSetup + '\n\n' : ''}// ── ACF Pro fields — fetch all upfront ──────────────────────────────────────
 ${fieldFetches}
-${bgColorFetch ? '\n' + bgColorFetch + '\n' : ''}
-// Wrapper flag — only render content div when at least one non-media field has a value
-${hasContentFlag}
-?>
+${bgColorFetch ? '\n' + bgColorFetch + '\n' : ''}?>
 
 <section id="<?php echo esc_attr( $block_id ); ?>"
          class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>"
          ${styleAttr}>
-${mediaBlock ? '\n' + mediaBlock + '\n' : ''}
-  <?php if ( $has_content ) : ?>
-    <div class="${slug}__content">
+  <div class="${slug}__inner">
 
-${contentBlock}
+${innerBlock}
 
-    </div>
-  <?php endif; ?>
-
+  </div>
 </section>
 `
 

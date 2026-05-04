@@ -27,7 +27,13 @@ export function generateBlockCss(schema) {
  *
  * Typography tokens (declared on .${slug}) follow the agency Figma scale.
  * They are scoped to this block — won't leak outside .${slug}.
- * Mobile breakpoint: max-width 767px.
+ *
+ * Layout contract (agency standard):
+ *   - body is 100% width with max-width 1920px (set globally in the theme)
+ *   - section (.${slug}) is always 100% width
+ *   - section padding scales: 100px 6% (default desktop ≥ 1280px),
+ *     80px 60px (≤ 1279px), 60px 40px (≤ 1024px), 40px 20px (≤ 767px)
+ *   - .${slug}__inner is always 100% width, flex column, gap 60px
  */
 
 .${slug} {
@@ -46,24 +52,11 @@ export function generateBlockCss(schema) {
   width: 100%;
   box-sizing: border-box;
   position: relative;
-  padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 4vw, 2rem);
+  padding: 100px 6%;
   font-family: var(--paragraph-font, system-ui, sans-serif);
   font-size: var(--font-size-par);
   line-height: var(--line-height-par);
   color: var(--primary-color, #111);
-}
-
-@media (max-width: 767px) {
-  .${slug} {
-    --font-size-h1: 42px;   --line-height-h1: 50px;
-    --font-size-h2: 34px;   --line-height-h2: 46px;
-    --font-size-h3: 30px;   --line-height-h3: 42px;
-    --font-size-h4: 24px;   --line-height-h4: 36px;
-    --font-size-h5: 20px;   --line-height-h5: 28px;
-    --font-size-h6: 16px;   --line-height-h6: 24px;
-    --font-size-par: 16px;  --line-height-par: 24px;
-    /* button + label intentionally not overridden — same on both breakpoints */
-  }
 }
 
 .${slug} *,
@@ -72,12 +65,11 @@ export function generateBlockCss(schema) {
   box-sizing: border-box;
 }
 
-.${slug}__content {
-  max-width: 1200px;
-  margin-inline: auto;
+.${slug}__inner {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 60px;
 }
 
 .${slug}__heading {
@@ -97,10 +89,35 @@ export function generateBlockCss(schema) {
 
 ${elementStubs}
 
-/* ---- Mobile ---- */
+/* ---- ≤ 1279px ---- */
+@media (max-width: 1279px) {
+  .${slug} {
+    padding: 80px 60px;
+  }
+}
+
+/* ---- ≤ 1024px ---- */
+@media (max-width: 1024px) {
+  .${slug} {
+    padding: 60px 40px;
+  }
+}
+
+/* ---- ≤ 767px (mobile) ---- */
 @media (max-width: 767px) {
   .${slug} {
-    /* mobile adjustments */
+    /* Typography overrides */
+    --font-size-h1: 42px;   --line-height-h1: 50px;
+    --font-size-h2: 34px;   --line-height-h2: 46px;
+    --font-size-h3: 30px;   --line-height-h3: 42px;
+    --font-size-h4: 24px;   --line-height-h4: 36px;
+    --font-size-h5: 20px;   --line-height-h5: 28px;
+    --font-size-h6: 16px;   --line-height-h6: 24px;
+    --font-size-par: 16px;  --line-height-par: 24px;
+    /* button + label intentionally not overridden — same on both breakpoints */
+
+    /* Layout */
+    padding: 40px 20px;
   }
 }
 
