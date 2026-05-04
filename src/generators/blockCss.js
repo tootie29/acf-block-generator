@@ -1,38 +1,9 @@
 // Generate a BEM-scaffolded stylesheet.css using the agency's global CSS
 // variables AND the canonical typography token scale (sourced from the
-// agency Figma file). Every generated block ships with the same :root
-// scaffold so font sizes stay consistent across the site without requiring
-// any theme-level setup. Mobile breakpoint is fixed at max-width 767px.
-
-const TYPOGRAPHY_SCAFFOLD = `/* ─────────────────────────────────────────────────────────────────────────
- * Typography scale — agency design-system tokens
- * Mobile breakpoint: 767px and below
- * Desktop / tablet: 768px and above (default values at :root)
- * ───────────────────────────────────────────────────────────────────────── */
-:root {
-  --font-size-h1: 50px;     --line-height-h1: 60px;
-  --font-size-h2: 44px;     --line-height-h2: 56px;
-  --font-size-h3: 36px;     --line-height-h3: 48px;
-  --font-size-h4: 30px;     --line-height-h4: 42px;
-  --font-size-h5: 24px;     --line-height-h5: 32px;
-  --font-size-h6: 18px;     --line-height-h6: 26px;
-  --font-size-par: 18px;    --line-height-par: 26px;
-  --font-size-button: 20px; --line-height-button: 20px;
-  --font-size-label: 16px;  --line-height-label: 24px;
-}
-
-@media (max-width: 767px) {
-  :root {
-    --font-size-h1: 42px;   --line-height-h1: 50px;
-    --font-size-h2: 34px;   --line-height-h2: 46px;
-    --font-size-h3: 30px;   --line-height-h3: 42px;
-    --font-size-h4: 24px;   --line-height-h4: 36px;
-    --font-size-h5: 20px;   --line-height-h5: 28px;
-    --font-size-h6: 16px;   --line-height-h6: 24px;
-    --font-size-par: 16px;  --line-height-par: 24px;
-    /* button + label intentionally not overridden — same on both breakpoints */
-  }
-}`
+// agency Figma file). Typography vars are scoped to the block's root
+// selector (.{slug}) so each block carries its own copy without polluting
+// :root or affecting other blocks / the rest of the page.
+// Mobile breakpoint is fixed at max-width 767px.
 
 export function generateBlockCss(schema) {
   const { slug, fields, options } = schema
@@ -54,13 +25,24 @@ export function generateBlockCss(schema) {
  *   --primary-color, --secondary-color, --tertiary-color,
  *   --heading-font, --paragraph-font
  *
- * Typography tokens (declared below) follow the agency Figma scale.
+ * Typography tokens (declared on .${slug}) follow the agency Figma scale.
+ * They are scoped to this block — won't leak outside .${slug}.
  * Mobile breakpoint: max-width 767px.
  */
 
-${TYPOGRAPHY_SCAFFOLD}
-
 .${slug} {
+  /* ── Typography scale (block-scoped) ──────────────────────────────────── */
+  --font-size-h1: 50px;     --line-height-h1: 60px;
+  --font-size-h2: 44px;     --line-height-h2: 56px;
+  --font-size-h3: 36px;     --line-height-h3: 48px;
+  --font-size-h4: 30px;     --line-height-h4: 42px;
+  --font-size-h5: 24px;     --line-height-h5: 32px;
+  --font-size-h6: 18px;     --line-height-h6: 26px;
+  --font-size-par: 18px;    --line-height-par: 26px;
+  --font-size-button: 20px; --line-height-button: 20px;
+  --font-size-label: 16px;  --line-height-label: 24px;
+
+  /* ── Block layout ─────────────────────────────────────────────────────── */
   width: 100%;
   box-sizing: border-box;
   position: relative;
@@ -69,6 +51,19 @@ ${TYPOGRAPHY_SCAFFOLD}
   font-size: var(--font-size-par);
   line-height: var(--line-height-par);
   color: var(--primary-color, #111);
+}
+
+@media (max-width: 767px) {
+  .${slug} {
+    --font-size-h1: 42px;   --line-height-h1: 50px;
+    --font-size-h2: 34px;   --line-height-h2: 46px;
+    --font-size-h3: 30px;   --line-height-h3: 42px;
+    --font-size-h4: 24px;   --line-height-h4: 36px;
+    --font-size-h5: 20px;   --line-height-h5: 28px;
+    --font-size-h6: 16px;   --line-height-h6: 24px;
+    --font-size-par: 16px;  --line-height-par: 24px;
+    /* button + label intentionally not overridden — same on both breakpoints */
+  }
 }
 
 .${slug} *,
