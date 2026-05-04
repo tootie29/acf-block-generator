@@ -14,8 +14,8 @@ const DEFAULT_SCHEMA = {
   template: 'blank',
   headingTag: 'h2', // 'h1' | 'h2'
   options: {
-    hasBgColor: false,
-    hasSectionId: true, // always true per skill (locked)
+    hasBgColor: true,    // always true (locked) — bg_color field is on every section
+    hasSectionId: true,  // always true (locked) — section_id field is on every section
     hasCustomJs: false,
     possibleHero: false,
     hasGlobalSettings: false,
@@ -195,24 +195,12 @@ export default function App() {
         <div className="section">
           <h3 className="section-title">4 · Agency standards</h3>
           <p className="hint" style={{ marginTop: 0, marginBottom: 12 }}>
-            Always-on: <code>section_id</code> field, BEM root <code>.{slug || 'slug'}</code>,
-            global CSS vars (<code>--primary-color</code>, <code>--heading-font</code>, etc),
+            Always-on: <code>section_id</code> field, <code>bg_color</code> field
+            (color picker rendered as inline <code>style</code> on the section), BEM root
+            <code> .{slug || 'slug'}</code>, global CSS vars
+            (<code>--primary-color</code>, <code>--heading-font</code>, etc),
             globally-unique ACF keys, every field wrapped in empty-check.
           </p>
-
-          <label className="checkbox-row">
-            <input
-              type="checkbox"
-              checked={schema.options.hasBgColor}
-              onChange={(e) => updateOption('hasBgColor', e.target.checked)}
-            />
-            <div className="label-text">
-              Add <code>bg_color</code> field
-              <span className="desc">
-                ACF color picker; rendered as inline <code>style</code> on the section.
-              </span>
-            </div>
-          </label>
 
           <label className="checkbox-row">
             <input
