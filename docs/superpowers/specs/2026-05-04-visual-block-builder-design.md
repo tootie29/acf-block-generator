@@ -18,6 +18,26 @@ The builder replaces the hardcoded "image-on-top, content-stacked-below" output 
 - Per-property responsive control (only a curated subset of properties are responsive).
 - Multi-block templates / page-level layouts.
 
+## Boundary: design-time only — nothing ships to WordPress
+
+The visual builder lives **exclusively** inside this Vite/React generator app. It runs in the designer's browser at design time, then the generator emits static files. None of the following ever appear in the downloaded ZIP or in the WordPress site:
+
+- The builder UI (Palette / Canvas / Inspector / Tree)
+- dnd-kit, React, Vite, or any of the app's runtime dependencies
+- The layout tree JSON (`schema.layout`)
+- Any "edit-mode" placeholders, drop zones, selection outlines
+- Any `data-*` attributes or HTML hooks that reference the builder
+
+**What ships to WordPress** stays exactly the same set of files the generator produces today:
+
+- `block.json`
+- `fields.php` (with optional global-settings snippet appended)
+- `template.php` (formerly render.php — now generated *from* the layout tree)
+- `stylesheet.css` (formerly block.css — now generated *from* the layout tree)
+- `block.js` (only when libraries / custom JS are toggled on)
+
+The layout tree is the **input** to the generator, not part of its output. Once the user clicks Download, the layout tree has done its job; the resulting PHP/CSS is fully self-contained and depends on nothing from this app at runtime. A WordPress editor opening the block in WP Admin sees the standard ACF form (mode "edit") backed by `fields.php`, then the published site renders via `template.php` + `stylesheet.css`. The generator app and its visual builder are never loaded, fetched, or referenced.
+
 ## Context
 
 The current generator hardcodes layout in `src/generators/renderPhp.js`:
