@@ -1,4 +1,4 @@
-// Generate block.json content matching the skill convention
+// Generate block.json content matching the SGE convention
 export function generateBlockJson(schema) {
   const {
     namespace,
@@ -11,28 +11,22 @@ export function generateBlockJson(schema) {
     options,
   } = schema
 
-  const supports = {
-    anchor: true,
-    align: ['wide', 'full'],
-    html: false,
-  }
-
   const json = {
-    $schema: 'https://schemas.wp.org/trunk/block.json',
-    apiVersion: 3,
     name: `${namespace}/${slug}`,
     title,
-    description: description || `${title} block`,
-    category: 'theme',
-    icon: icon || 'layout',
+    description: description || `${title} Block`,
+    icon: icon || 'admin-comments',
     keywords: keywords && keywords.length ? keywords : [slug],
+    category: 'sge_blocks',
     acf: {
       mode: 'edit',
-      renderTemplate: `gutenberg-blocks/${slug}/render.php`,
+      renderTemplate: 'template.php',
     },
-    supports,
-    style: 'file:./block.css',
-    editorStyle: 'file:./block.css',
+    style: ['file:./stylesheet.css'],
+    supports: {
+      anchor: false,
+      align: false,
+    },
   }
 
   // Add viewScript if any library is enabled or custom JS toggled on

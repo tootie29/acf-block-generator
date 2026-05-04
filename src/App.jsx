@@ -5,7 +5,7 @@ import { toSlug, detectLibraries } from './lib/utils.js'
 import { buildZip, triggerDownload } from './generators/index.js'
 
 const DEFAULT_SCHEMA = {
-  namespace: 'richardmedina',
+  namespace: 'sge',
   blockName: 'Hero Banner',
   description: '',
   icon: 'layout',
