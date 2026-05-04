@@ -101,12 +101,12 @@ type NodeType =
 
 // StyleObject — curated keys only (Phase 1)
 {
-  padding?: string,           // e.g. "32px" or "16px 24px"
+  typography?: TypographyToken,  // see Typography tokens below — picks size+line-height pair
+  padding?: string,              // e.g. "32px" or "16px 24px"
   margin?: string,
   gap?: string,
-  background?: string,        // hex or var(--primary-color)
-  color?: string,             // text color
-  fontSize?: string,
+  background?: string,           // hex or var(--primary-color)
+  color?: string,                // text color
   fontWeight?: string | number,
   textAlign?: 'left' | 'center' | 'right',
   alignItems?: 'flex-start' | 'center' | 'flex-end' | 'stretch',
@@ -116,8 +116,14 @@ type NodeType =
   maxWidth?: string,
 }
 
+// TypographyToken — fixed enum, drives font-size + line-height via CSS vars
+type TypographyToken =
+  | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+  | 'par' | 'button' | 'label'
+
 // RESPONSIVE_KEYS — keys allowed in style.mobile (subset)
-const RESPONSIVE_KEYS = ['padding', 'margin', 'gap', 'fontSize', 'flexDirection', 'textAlign']
+// Typography is excluded — it auto-responds via the token's own mobile var.
+const RESPONSIVE_KEYS = ['padding', 'margin', 'gap', 'flexDirection', 'textAlign']
 ```
 
 `schema.fields[]` is unchanged. The builder reads it (to populate the bind-to-field dropdown) but never writes to it.
@@ -196,6 +202,72 @@ Modified files:
 
 Phase 1 ships exactly one preset:
 - **"Stack"** — section > stack > [heading, text, image] (mirrors the current default output, validates round-trip)
+
+### Typography tokens (locked)
+
+Sourced verbatim from the agency's Figma design system file. Naming typos in the Figma file (`H1 - D` should be `H1 - M`, `h4 - M` should be `H4 - M`) are corrected in the generator — the token contract uses the canonical names below.
+
+| Token | Desktop (size / line-height) | Mobile (size / line-height) |
+|---|---|---|
+| `h1` | 50 / 60 | 42 / 50 |
+| `h2` | 44 / 56 | 34 / 46 |
+| `h3` | 36 / 48 | 30 / 42 |
+| `h4` | 30 / 42 | 24 / 36 |
+| `h5` | 24 / 32 | 20 / 28 |
+| `h6` | 18 / 26 | 16 / 24 |
+| `par` | 18 / 26 | 16 / 24 |
+| `button` | 20 / 20 | 20 / 20 *(no mobile override)* |
+| `label` | 16 / 24 | 16 / 24 *(no mobile override)* |
+
+**CSS variable contract.** Each token contributes two custom properties: `--font-size-{token}` and `--line-height-{token}`. The mobile breakpoint redefines them inside a single `@media (max-width: 768px) :root { ... }` block, so any selector using `var(--font-size-h2)` automatically gets the responsive value with **zero per-element media queries**.
+
+**Where the scaffold lives.**
+- The generator does **not** redefine the tokens inside each block's `stylesheet.css` (would shadow the theme's globals and risk drift). Instead, blocks reference the vars via `var(--font-size-h2)`.
+- The bundled README ships the master `:root` scaffold for the team to paste **once** into the theme's global stylesheet (or a Sass partial). After that, every block built by the generator inherits the scale automatically.
+- The scaffold is also exposed as a "Copy typography scaffold" button on Step 6 (Layout) for one-click copy.
+
+**Master scaffold (emitted in README, also pasteable from the wizard):**
+
+```css
+:root {
+  --font-size-h1: 50px;     --line-height-h1: 60px;
+  --font-size-h2: 44px;     --line-height-h2: 56px;
+  --font-size-h3: 36px;     --line-height-h3: 48px;
+  --font-size-h4: 30px;     --line-height-h4: 42px;
+  --font-size-h5: 24px;     --line-height-h5: 32px;
+  --font-size-h6: 18px;     --line-height-h6: 26px;
+  --font-size-par: 18px;    --line-height-par: 26px;
+  --font-size-button: 20px; --line-height-button: 20px;
+  --font-size-label: 16px;  --line-height-label: 24px;
+}
+
+@media (max-width: 768px) {
+  :root {
+    --font-size-h1: 42px;   --line-height-h1: 50px;
+    --font-size-h2: 34px;   --line-height-h2: 46px;
+    --font-size-h3: 30px;   --line-height-h3: 42px;
+    --font-size-h4: 24px;   --line-height-h4: 36px;
+    --font-size-h5: 20px;   --line-height-h5: 28px;
+    --font-size-h6: 16px;   --line-height-h6: 24px;
+    --font-size-par: 16px;  --line-height-par: 24px;
+    /* button and label intentionally not overridden — same on both breakpoints */
+  }
+}
+```
+
+**Inspector UX.** The Style panel exposes a single "Typography" dropdown listing the 9 tokens with a live size/line-height preview next to each name. Picking `h2` writes `style.desktop.typography = 'h2'`. Mobile breakpoint **does not** show a typography control — the auto-pairing via CSS vars is the contract. (If a designer needs a non-paired override on mobile, they use the Custom CSS escape hatch.)
+
+**CSS emission for typography.** Whenever `style.desktop.typography` is set, the generator emits two declarations into the block's stylesheet:
+
+```css
+.hero-banner__title {
+  font-size: var(--font-size-h1);
+  line-height: var(--line-height-h1);
+  /* ...other inspector properties */
+}
+```
+
+`fontWeight` remains a separate manual control in the StyleObject — it's not bundled into the typography tokens because the Figma file doesn't expose weights as part of these styles. Designers pick weight independently via a small enum (400/500/600/700) in the inspector.
 
 ### Style emission rules
 
