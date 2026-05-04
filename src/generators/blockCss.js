@@ -89,6 +89,56 @@ export function generateBlockCss(schema) {
 
 ${elementStubs}
 
+/* ---- WYSIWYG content vertical rhythm ---- */
+.wysiwyg--content h1,
+.wysiwyg--content h2,
+.wysiwyg--content h3,
+.wysiwyg--content h4,
+.wysiwyg--content h5,
+.wysiwyg--content h6 {
+  margin-top: 32px;
+  margin-bottom: 0;
+}
+.wysiwyg--content h1:first-child,
+.wysiwyg--content h2:first-child,
+.wysiwyg--content h3:first-child,
+.wysiwyg--content h4:first-child,
+.wysiwyg--content h5:first-child,
+.wysiwyg--content h6:first-child {
+  margin-top: 0;
+}
+.wysiwyg--content p,
+.wysiwyg--content ul,
+.wysiwyg--content ol,
+.wysiwyg--content blockquote,
+.wysiwyg--content pre,
+.wysiwyg--content code,
+.wysiwyg--content table,
+.wysiwyg--content img,
+.wysiwyg--content iframe,
+.wysiwyg--content video,
+.wysiwyg--content audio,
+.wysiwyg--content embed,
+.wysiwyg--content object {
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+.wysiwyg--content p:first-child,
+.wysiwyg--content ul:first-child,
+.wysiwyg--content ol:first-child,
+.wysiwyg--content blockquote:first-child,
+.wysiwyg--content pre:first-child,
+.wysiwyg--content code:first-child,
+.wysiwyg--content table:first-child,
+.wysiwyg--content img:first-child,
+.wysiwyg--content iframe:first-child,
+.wysiwyg--content video:first-child,
+.wysiwyg--content audio:first-child,
+.wysiwyg--content embed:first-child,
+.wysiwyg--content object:first-child {
+  margin-top: 0;
+}
+
 /* ---- ≤ 1279px ---- */
 @media (max-width: 1279px) {
   .${slug} {
