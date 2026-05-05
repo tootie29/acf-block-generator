@@ -1,4 +1,5 @@
 // Generate render.php matching every rule in the skill's render.php section.
+import { getTemplate } from '../lib/templates.js'
 
 function ind(level) {
   return '  '.repeat(level)
@@ -37,8 +38,13 @@ ${pad}<?php endif; ?>`
     case 'image': {
       const sz = field.imageSize || 'full'
       const mobileSz = field.mobileImageSize || 'large'
+      const fmt = ['id', 'array', 'url'].includes(field.return_format)
+        ? field.return_format
+        : 'id'
+
       // Hero + featured-fallback combo: render <picture> with the featured
       // image as the mobile <source>. Hero LCP images load eagerly.
+      // This path requires attachment IDs, so it forces id-format regardless.
       if (isHero && field.useFeatured) {
         return `${pad}<?php if ( $${field.name} ) : ?>
 ${pad}  <div class="${cls}-wrap">
@@ -61,7 +67,31 @@ ${pad}    </picture>
 ${pad}  </div>
 ${pad}<?php endif; ?>`
       }
-      // Standard image render — fetch line already handles useFeatured fallback.
+
+      // return_format: 'array' — ACF returns an array of image data
+      if (fmt === 'array') {
+        return `${pad}<?php if ( $${field.name} && ! empty( $${field.name}['url'] ) ) : ?>
+${pad}  <div class="${cls}-wrap">
+${pad}    <img class="${cls}"
+${pad}         src="<?php echo esc_url( $${field.name}['sizes']['${sz}'] ?? $${field.name}['url'] ); ?>"
+${pad}         alt="<?php echo esc_attr( $${field.name}['alt'] ); ?>"
+${pad}         width="<?php echo esc_attr( $${field.name}['width'] ); ?>"
+${pad}         height="<?php echo esc_attr( $${field.name}['height'] ); ?>"
+${pad}         loading="lazy" />
+${pad}  </div>
+${pad}<?php endif; ?>`
+      }
+
+      // return_format: 'url' — ACF returns a plain URL string (link to full)
+      if (fmt === 'url') {
+        return `${pad}<?php if ( $${field.name} ) : ?>
+${pad}  <div class="${cls}-wrap">
+${pad}    <img class="${cls}" src="<?php echo esc_url( $${field.name} ); ?>" alt="" loading="lazy" />
+${pad}  </div>
+${pad}<?php endif; ?>`
+      }
+
+      // return_format: 'id' (default) — wp_get_attachment_image() handles srcset/alt
       return `${pad}<?php if ( $${field.name} ) : ?>
 ${pad}  <div class="${cls}-wrap">
 ${pad}    <?php echo wp_get_attachment_image( $${field.name}, '${sz}', false, [
@@ -213,6 +243,10 @@ $use_global_settings = (bool) get_field( 'use_global_settings' );`
   // its own empty-check, so empty fields produce no markup. The inner wrapper
   // is always rendered (per agency layout contract: section always has __inner
   // with width 100%, flex column, gap 60px).
+  // Template-level render extras (e.g. CTA chevrons) — prepended inside .__inner
+  const template = getTemplate(schema.template)
+  const extraRender = template?.extraRender ? template.extraRender(schema) : ''
+
   const innerBlock = fields
     .map((f) => {
       if (f === headingField) {
@@ -265,7 +299,7 @@ ${bgColorFetch ? '\n' + bgColorFetch + '\n' : ''}?>
          class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>"
          ${styleAttr}>
   <div class="${slug}__inner">
-
+${extraRender ? '\n' + extraRender + '\n' : ''}
 ${innerBlock}
 
   </div>

@@ -1,7 +1,9 @@
 import { useMemo, useState, useEffect } from 'react'
 import FieldList from './components/FieldList.jsx'
 import CodePreview from './components/CodePreview.jsx'
+import TemplatePreview from './components/TemplatePreview.jsx'
 import { toSlug, detectLibraries } from './lib/utils.js'
+import { TEMPLATES, getTemplate } from './lib/templates.js'
 import { buildZip, triggerDownload } from './generators/index.js'
 
 const DEFAULT_SCHEMA = {
@@ -54,6 +56,30 @@ export default function App() {
 
   const updateOption = (key, val) => {
     setSchema({ ...schema, options: { ...schema.options, [key]: val } })
+  }
+
+  const selectedTemplate = getTemplate(schema.template)
+
+  const handleTemplateChange = (nextId) => {
+    if (nextId === schema.template) return
+    const template = getTemplate(nextId)
+    const presetFields = template.fields()
+
+    if (presetFields.length === 0) {
+      setSchema({ ...schema, template: nextId })
+      return
+    }
+
+    if (
+      schema.fields.length > 0 &&
+      !confirm(
+        `Switching to "${template.label}" will replace your current ${schema.fields.length} field(s) with the template's pre-filled fields. Continue?`,
+      )
+    ) {
+      return
+    }
+
+    setSchema({ ...schema, template: nextId, fields: presetFields })
   }
 
   const handleDownload = async () => {
@@ -183,12 +209,19 @@ export default function App() {
             <label>Block template</label>
             <select
               value={schema.template}
-              onChange={(e) => setSchema({ ...schema, template: e.target.value })}
+              onChange={(e) => handleTemplateChange(e.target.value)}
             >
-              <option value="blank">Blank — minimal markup, just your fields</option>
+              {TEMPLATES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.label}
+                </option>
+              ))}
             </select>
-            <p className="hint">More templates can be added to <code>src/lib/templates.js</code> later.</p>
+            {selectedTemplate?.description && (
+              <p className="hint">{selectedTemplate.description}</p>
+            )}
           </div>
+          <TemplatePreview template={selectedTemplate} />
         </div>
 
         {/* ── Step 4: Standards toggles ── */}

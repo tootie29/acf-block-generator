@@ -1,4 +1,5 @@
 // Generates stylesheet.css scaffold for an ACF block.
+import { getTemplate } from '../lib/templates.js'
 //
 // Conventions enforced here:
 //   - All custom CSS variables are scoped to .{slug} (block-local).
@@ -18,6 +19,10 @@ export function generateBlockCss(schema) {
   const elementStubs = elementSelectors
     .map((sel) => `${sel} {\n  /* ${sel} styles */\n}`)
     .join('\n\n')
+
+  // Template-level CSS extras (e.g. CTA layout + chevron animation)
+  const template = getTemplate(schema.template)
+  const extraCss = template?.extraCss ? template.extraCss(schema) : ''
 
   return `/**
  * Block: ${slug}
@@ -224,5 +229,5 @@ ${elementStubs || '/* No custom fields yet — stubs will appear here. */'}
     padding: 40px 20px;
   }
 }
-`
+${extraCss}`
 }

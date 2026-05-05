@@ -82,11 +82,15 @@ function renderField(field, opts = {}) {
       if (field.max !== '' && field.max !== undefined) lines.push(`    'max'         => ${field.max},`)
       if (field.step !== '' && field.step !== undefined) lines.push(`    'step'        => ${field.step},`)
       break
-    case 'image':
-      lines.push(`    'return_format' => 'id',`) // ALWAYS id per skill
+    case 'image': {
+      const imgFormat = ['id', 'array', 'url'].includes(field.return_format)
+        ? field.return_format
+        : 'id'
+      lines.push(`    'return_format' => '${imgFormat}',`)
       lines.push(`    'preview_size'  => '${field.preview_size || 'medium'}',`)
       lines.push(`    'library'       => '${field.library || 'all'}',`)
       break
+    }
     case 'gallery':
       lines.push(`    'return_format' => 'array',`)
       lines.push(`    'preview_size'  => '${field.preview_size || 'medium'}',`)

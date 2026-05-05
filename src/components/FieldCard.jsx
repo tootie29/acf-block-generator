@@ -246,6 +246,23 @@ export default function FieldCard({ field, onChange, onRemove, isSubField = fals
         {field.type === 'image' && (
           <>
             <div>
+              <label>Return format</label>
+              <select
+                value={field.return_format || 'id'}
+                onChange={(e) => update({ return_format: e.target.value })}
+              >
+                <option value="id">ID — attachment ID (recommended)</option>
+                <option value="array">Array — image array (url, alt, sizes…)</option>
+                <option value="url">URL — image URL string only</option>
+              </select>
+              <p className="hint">
+                ACF return format. <code>id</code> uses{' '}
+                <code>wp_get_attachment_image()</code>. <code>array</code> reads{' '}
+                <code>$img['url']</code>, <code>['alt']</code>, <code>['sizes']</code>.{' '}
+                <code>url</code> is a plain string.
+              </p>
+            </div>
+            <div>
               <label>Image size</label>
               <select
                 value={field.imageSize || 'full'}
@@ -257,7 +274,10 @@ export default function FieldCard({ field, onChange, onRemove, isSubField = fals
                 <option value="large">large</option>
                 <option value="full">full</option>
               </select>
-              <p className="hint">Used by wp_get_attachment_image()</p>
+              <p className="hint">
+                Used by <code>wp_get_attachment_image()</code> (id format) or{' '}
+                <code>$img['sizes'][...]</code> (array format).
+              </p>
             </div>
             {isHero && !isSubField && (
               <>
