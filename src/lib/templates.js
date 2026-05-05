@@ -137,7 +137,8 @@ export const TEMPLATES = [
 .${slug} .${slug}__inner {
   position: relative;
   z-index: 1;
-  max-width: 1040px;
+  width: 100%;
+  max-width: 90%; /* percentage cap — never absolute px */
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -145,6 +146,7 @@ export const TEMPLATES = [
   gap: 32px;
 }
 
+/* Decorative SVG icon — fixed pixel size is intentional (artwork, not layout). */
 .${slug} .${slug}__arrows {
   width: 18px;
   height: 31px;
@@ -185,7 +187,7 @@ export const TEMPLATES = [
 }
 
 .${slug} .${slug}__eyebrow {
-  font-family: var(--heading-font, "Lato", sans-serif);
+  font-family: var(--heading-font, "Lato", system-ui, sans-serif);
   font-weight: 700;
   font-size: 14px;
   line-height: 22px;
@@ -193,10 +195,11 @@ export const TEMPLATES = [
   text-transform: uppercase;
   color: #05356a;
   margin: 0;
+  width: 100%;
 }
 
 .${slug} .${slug}__heading {
-  font-family: var(--heading-font, "Lato", sans-serif);
+  font-family: var(--heading-font, "Lato", system-ui, sans-serif);
   font-weight: 900;
   font-style: italic;
   font-size: clamp(30px, 4vw, 40px);
@@ -204,11 +207,13 @@ export const TEMPLATES = [
   color: #000;
   margin: 0;
   text-transform: capitalize;
-  max-width: 880px;
+  width: 100%;
+  max-width: 55ch; /* readability cap in character units, not px */
 }
 
 .${slug} .wysiwyg--content {
-  max-width: 600px;
+  width: 100%;
+  max-width: 65ch; /* paragraph readability cap */
   color: #404040;
   font-size: 16px;
   line-height: 24px;
@@ -223,7 +228,7 @@ export const TEMPLATES = [
   border: 1px solid #3089bc;
   border-radius: 999px;
   color: #fff;
-  font-family: var(--heading-font, "Lato", sans-serif);
+  font-family: var(--heading-font, "Lato", system-ui, sans-serif);
   font-weight: 700;
   font-size: 18px;
   line-height: 18px;
@@ -382,7 +387,8 @@ export const TEMPLATES = [
 }
 
 .${slug} .${slug}__inner {
-  max-width: 1200px;
+  width: 100%;
+  max-width: 90%; /* percentage cap — never absolute px */
   margin: 0 auto;
   gap: 100px;
   align-items: stretch;
@@ -396,13 +402,15 @@ export const TEMPLATES = [
   text-align: center;
   color: #000;
   text-transform: capitalize;
-  max-width: 800px;
+  width: 100%;
+  max-width: 50ch; /* heading readability cap, character-relative */
   margin: 0 auto;
 }
 
 .${slug} .${slug}__intro-text-wrap,
 .${slug} > .${slug}__inner > .wysiwyg--content {
-  max-width: 800px;
+  width: 100%;
+  max-width: 65ch; /* paragraph readability cap, character-relative */
   margin: 24px auto 0;
   text-align: center;
   color: #333;
@@ -518,6 +526,7 @@ export const TEMPLATES = [
   line-height: 26px;
 }
 
+/* Decorative bullet icon — fixed pixel size is intentional (artwork, not layout). */
 .${slug} .${slug}__items-body .wysiwyg--content ul li::before {
   content: "";
   position: absolute;

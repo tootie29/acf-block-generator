@@ -35,6 +35,12 @@ export function generateBlockCss(schema) {
  *   .${slug}              section, always 100% width; padding scales w/ breakpoint
  *   .${slug}__inner       always 100% width; flex column; gap 60px
  *
+ *   Width rule: every block element uses width: 100% and max-width
+ *   in PERCENTAGES (or no max-width at all). Never set absolute pixel
+ *   widths — they break fluid layouts and container queries. Two-
+ *   column rows: each column gets width:100% + max-width:50% (with a
+ *   flex-basis calc to absorb the gap).
+ *
  * ──── Breakpoints (max-width, desktop-first cascade) ──────────────
  *   Desktop          ≥ 1280px  (default values)
  *   Small desktop    ≤ 1279px
@@ -46,10 +52,12 @@ export function generateBlockCss(schema) {
  *   matching --line-height-* are declared on .${slug} so they cascade
  *   only inside this block. Mobile redefines them inside the ≤ 767px
  *   media query — no per-element font-size overrides needed.
+ *   Default font: Lato (used as the fallback in --heading-font and
+ *   --paragraph-font). The theme can override either var globally.
  *
  * ──── Global vars expected from theme ─────────────────────────────
  *   --primary-color, --secondary-color, --tertiary-color
- *   --heading-font, --paragraph-font
+ *   --heading-font, --paragraph-font  (default fallback: Lato)
  */
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -72,7 +80,7 @@ export function generateBlockCss(schema) {
   box-sizing: border-box;
   position: relative;
   padding: 100px 6%;
-  font-family: var(--paragraph-font, system-ui, sans-serif);
+  font-family: var(--paragraph-font, "Lato", system-ui, sans-serif);
   font-size: var(--font-size-par);
   line-height: var(--line-height-par);
   color: var(--primary-color, #111);
@@ -101,7 +109,7 @@ export function generateBlockCss(schema) {
  *      for hero blocks, h2 for inner blocks.
  * ═══════════════════════════════════════════════════════════════════ */
 .${slug} .${slug}__heading {
-  font-family: var(--heading-font, inherit);
+  font-family: var(--heading-font, "Lato", system-ui, sans-serif);
   font-size: var(--font-size-h1);
   line-height: var(--line-height-h1);
   margin: 0;
