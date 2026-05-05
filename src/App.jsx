@@ -200,28 +200,18 @@ export default function App() {
         {/* ── Step 2: Purpose ── */}
         <div className="section">
           <h3 className="section-title">2 · Purpose</h3>
-          <div className="field-row">
-            <div>
-              <label>Block role</label>
-              <select
-                value={schema.purpose}
-                onChange={(e) => setSchema({ ...schema, purpose: e.target.value })}
-              >
-                <option value="hero">Hero section (page header — H1)</option>
-                <option value="inner">Inner section (regular content — H2)</option>
-              </select>
-            </div>
-            <div>
-              <label>Heading tag</label>
-              <select
-                value={schema.headingTag}
-                onChange={(e) => setSchema({ ...schema, headingTag: e.target.value })}
-              >
-                <option value="h1">h1</option>
-                <option value="h2">h2</option>
-              </select>
-              <p className="hint">Auto-set from role; override if needed.</p>
-            </div>
+          <div>
+            <label>Block role</label>
+            <select
+              value={schema.purpose}
+              onChange={(e) => setSchema({ ...schema, purpose: e.target.value })}
+            >
+              <option value="hero">Hero section (page header — H1)</option>
+              <option value="inner">Inner section (regular content — H2)</option>
+            </select>
+            <p className="hint">
+              Heading tag is auto-set from this role (Hero → H1, Inner → H2).
+            </p>
           </div>
         </div>
 
