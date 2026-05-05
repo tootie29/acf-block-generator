@@ -2,6 +2,8 @@ import { uid } from './utils.js'
 import { defaultFieldConfig } from './fieldTypes.js'
 import ctaDesktop from '../assets/templates/cta-desktop.png'
 import ctaMobile from '../assets/templates/cta-mobile.png'
+import repeatableImageContentDesktop from '../assets/templates/repeatable-image-content-desktop.png'
+import repeatableImageContentMobile from '../assets/templates/repeatable-image-content-mobile.png'
 
 // Build a field with a fresh React _uid + the type's default config, then merge
 // any overrides on top. Used by template `fields()` factories so every call
@@ -102,10 +104,13 @@ export const TEMPLATES = [
 
     // Appended to the generated stylesheet — overrides the generic scaffold
     // with CTA-specific centered layout, pill button, faded bg image, and
-    // chevron-fall animation.
+    // chevron-fall animation. Every child selector is parent-scoped under
+    // .{slug} so nothing can leak to other blocks or sections.
     extraCss: ({ slug }) => `
 /* ═══════════════════════════════════════════════════════════════════
  * CTA Template — centered callout + animated chevrons
+ *   All selectors below are scoped under .${slug} (BEM with parent
+ *   ancestor) so styles cannot affect any other block or section.
  * ═══════════════════════════════════════════════════════════════════ */
 .${slug} {
   position: relative;
@@ -129,7 +134,7 @@ export const TEMPLATES = [
   mix-blend-mode: luminosity;
 }
 
-.${slug}__inner {
+.${slug} .${slug}__inner {
   position: relative;
   z-index: 1;
   max-width: 1040px;
@@ -140,7 +145,7 @@ export const TEMPLATES = [
   gap: 32px;
 }
 
-.${slug}__arrows {
+.${slug} .${slug}__arrows {
   width: 18px;
   height: 31px;
   color: #3089bc;
@@ -148,21 +153,21 @@ export const TEMPLATES = [
   justify-content: center;
 }
 
-.${slug}__arrows svg {
+.${slug} .${slug}__arrows svg {
   width: 100%;
   height: 100%;
   overflow: visible;
 }
 
-.${slug}__arrows-chevron {
+.${slug} .${slug}__arrows-chevron {
   opacity: 0;
   transform: translateY(-8px);
   animation: ${slug}-chevron-fall 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-.${slug}__arrows-chevron:nth-child(1) { animation-delay: 0s; }
-.${slug}__arrows-chevron:nth-child(2) { animation-delay: 0.18s; }
-.${slug}__arrows-chevron:nth-child(3) { animation-delay: 0.36s; }
+.${slug} .${slug}__arrows-chevron:nth-child(1) { animation-delay: 0s; }
+.${slug} .${slug}__arrows-chevron:nth-child(2) { animation-delay: 0.18s; }
+.${slug} .${slug}__arrows-chevron:nth-child(3) { animation-delay: 0.36s; }
 
 @keyframes ${slug}-chevron-fall {
   0%   { opacity: 0; transform: translateY(-8px); }
@@ -172,14 +177,14 @@ export const TEMPLATES = [
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .${slug}__arrows-chevron {
+  .${slug} .${slug}__arrows-chevron {
     animation: none;
     opacity: 1;
     transform: none;
   }
 }
 
-.${slug}__eyebrow {
+.${slug} .${slug}__eyebrow {
   font-family: var(--heading-font, "Lato", sans-serif);
   font-weight: 700;
   font-size: 14px;
@@ -190,7 +195,7 @@ export const TEMPLATES = [
   margin: 0;
 }
 
-.${slug}__heading {
+.${slug} .${slug}__heading {
   font-family: var(--heading-font, "Lato", sans-serif);
   font-weight: 900;
   font-style: italic;
@@ -209,7 +214,7 @@ export const TEMPLATES = [
   line-height: 24px;
 }
 
-.${slug}__cta-button {
+.${slug} .${slug}__cta-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -228,21 +233,303 @@ export const TEMPLATES = [
   transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
-.${slug}__cta-button:hover,
-.${slug}__cta-button:focus-visible {
+.${slug} .${slug}__cta-button:hover,
+.${slug} .${slug}__cta-button:focus-visible {
   background-color: #246d99;
   border-color: #246d99;
   transform: translateY(-1px);
 }
 
-.${slug}__cta-button:focus-visible {
+.${slug} .${slug}__cta-button:focus-visible {
   outline: 2px solid #05356a;
   outline-offset: 3px;
 }
 
 @media (max-width: 767px) {
-  .${slug}__inner { gap: 20px; }
-  .${slug}__cta-button { width: 100%; padding: 18px 28px; }
+  .${slug} .${slug}__inner { gap: 20px; }
+  .${slug} .${slug}__cta-button { width: 100%; padding: 18px 28px; }
+}
+`,
+  },
+
+  {
+    id: 'repeatable_image_content',
+    label: 'Repeatable Image + Content Section',
+    description:
+      'Top intro (heading + paragraph) above a repeater of image+content rows. First image position is editor-controlled (left/right); subsequent rows alternate. Lato fonts, checkmark bullet list inside the WYSIWYG.',
+    preview: {
+      desktop: repeatableImageContentDesktop,
+      mobile: repeatableImageContentMobile,
+      caption: 'Intro + alternating image / copy rows',
+    },
+    suggestedSlug: 'repeatable-image-content',
+    suggestedHeadingTag: 'h2',
+    fields: () => [
+      makeField('textarea', {
+        name: 'intro_title',
+        label: 'Intro heading',
+        rows: 2,
+        placeholder: 'What is a Rhinoplasty?',
+        instructions:
+          'Top heading above the repeater. Renders inside the heading tag chosen in step 2 (h1 / h2).',
+        width: 100,
+      }),
+      makeField('wysiwyg', {
+        name: 'intro_text',
+        label: 'Intro paragraph',
+        instructions: 'Supporting paragraph below the intro heading. Optional.',
+        toolbar: 'basic',
+        width: 100,
+      }),
+      makeField('button_group', {
+        name: 'first_image_position',
+        label: 'First row image position',
+        choices: 'left : Image left\nright : Image right',
+        default_value: 'left',
+        allow_null: false,
+        instructions:
+          'Position of the first row image. Subsequent rows alternate automatically (every other row flips sides).',
+        width: 100,
+      }),
+      makeField('repeater', {
+        name: 'items',
+        label: 'Items',
+        button_label: 'Add Row',
+        min: 1,
+        max: 0,
+        instructions:
+          'Add as many image+content rows as you need. Each renders alternating left/right based on the toggle above.',
+        width: 100,
+        _skipRender: true, // template owns the loop markup so it can apply alternating layout
+        subFields: [
+          {
+            ...defaultFieldConfig('image'),
+            name: 'image',
+            label: 'Image',
+            return_format: 'id',
+            imageSize: 'large',
+            width: 50,
+          },
+          {
+            ...defaultFieldConfig('textarea'),
+            name: 'item_heading',
+            label: 'Item heading',
+            rows: 2,
+            placeholder: 'Who can undergo liposuction?',
+            width: 50,
+          },
+          {
+            ...defaultFieldConfig('wysiwyg'),
+            name: 'body',
+            label: 'Body',
+            toolbar: 'basic',
+            instructions:
+              'Paragraph + bulleted list. Use the WYSIWYG bullet button — bullets render with a green check icon.',
+            width: 100,
+          },
+        ],
+      }),
+    ],
+
+    // Owns the items repeater markup so we can apply the alternating-row
+    // modifier and a sub-field heading tag without a generator change.
+    extraRender: ({ slug }) => `    <?php
+    $first_image_position = get_field( 'first_image_position' ) ?: 'left';
+    ?>
+
+    <?php if ( have_rows( 'items' ) ) : ?>
+      <div class="${slug}__items ${slug}__items--first-<?php echo esc_attr( $first_image_position ); ?>">
+        <?php while ( have_rows( 'items' ) ) : the_row();
+          $item_image   = get_sub_field( 'image' );
+          $item_heading = get_sub_field( 'item_heading' );
+          $item_body    = get_sub_field( 'body' );
+        ?>
+          <div class="${slug}__items-item">
+            <?php if ( $item_image ) : ?>
+              <div class="${slug}__items-image-wrap">
+                <?php echo wp_get_attachment_image( $item_image, 'large', false, [
+                  'class'   => '${slug}__items-image',
+                  'loading' => 'lazy',
+                ] ); ?>
+              </div>
+            <?php endif; ?>
+
+            <div class="${slug}__items-body">
+              <?php if ( $item_heading ) : ?>
+                <h3 class="${slug}__items-heading"><?php echo esc_html( $item_heading ); ?></h3>
+              <?php endif; ?>
+              <?php if ( $item_body ) : ?>
+                <div class="wysiwyg--content">
+                  <?php echo wp_kses_post( $item_body ); ?>
+                </div>
+              <?php endif; ?>
+            </div>
+          </div>
+        <?php endwhile; ?>
+      </div>
+    <?php endif; ?>`,
+
+    // CTA-style scoped CSS — every selector wrapped under .{slug}.
+    extraCss: ({ slug }) => `
+/* ═══════════════════════════════════════════════════════════════════
+ * Repeatable Image + Content — Lato typography, alternating rows
+ *   All selectors below are scoped under .${slug}.
+ * ═══════════════════════════════════════════════════════════════════ */
+.${slug} {
+  background-color: #ffffff;
+  font-family: "Lato", system-ui, sans-serif;
+  color: #58585a;
+}
+
+.${slug} .${slug}__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 100px;
+  align-items: stretch;
+}
+
+.${slug} .${slug}__heading {
+  font-family: "Lato", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(30px, 4vw, 38px);
+  line-height: 1.26;
+  text-align: center;
+  color: #000;
+  text-transform: capitalize;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.${slug} .${slug}__intro-text-wrap,
+.${slug} > .${slug}__inner > .wysiwyg--content {
+  max-width: 800px;
+  margin: 24px auto 0;
+  text-align: center;
+  color: #333;
+  font-size: 18px;
+  line-height: 26px;
+}
+
+/* ─── Repeater wrapper ──────────────────────────────────────────── */
+.${slug} .${slug}__items {
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+  width: 100%;
+}
+
+.${slug} .${slug}__items-item {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 80px;
+}
+
+/* First row image side: left (default) ⇒ image first.
+   Then every other row flips. */
+.${slug} .${slug}__items--first-left  .${slug}__items-item:nth-child(odd)  .${slug}__items-image-wrap { order: 1; }
+.${slug} .${slug}__items--first-left  .${slug}__items-item:nth-child(odd)  .${slug}__items-body       { order: 2; }
+.${slug} .${slug}__items--first-left  .${slug}__items-item:nth-child(even) .${slug}__items-image-wrap { order: 2; }
+.${slug} .${slug}__items--first-left  .${slug}__items-item:nth-child(even) .${slug}__items-body       { order: 1; }
+
+.${slug} .${slug}__items--first-right .${slug}__items-item:nth-child(odd)  .${slug}__items-image-wrap { order: 2; }
+.${slug} .${slug}__items--first-right .${slug}__items-item:nth-child(odd)  .${slug}__items-body       { order: 1; }
+.${slug} .${slug}__items--first-right .${slug}__items-item:nth-child(even) .${slug}__items-image-wrap { order: 1; }
+.${slug} .${slug}__items--first-right .${slug}__items-item:nth-child(even) .${slug}__items-body       { order: 2; }
+
+.${slug} .${slug}__items-image-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.${slug} .${slug}__items-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 4px;
+  box-shadow: 0 24px 40px -16px rgba(0, 0, 0, 0.18);
+}
+
+.${slug} .${slug}__items-body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 40px 0;
+}
+
+.${slug} .${slug}__items-heading {
+  font-family: "Lato", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(28px, 3vw, 38px);
+  line-height: 1.26;
+  color: #000;
+  text-transform: capitalize;
+  margin: 0;
+}
+
+/* ─── WYSIWYG body — paragraph + checkmark bullet list ────────── */
+.${slug} .${slug}__items-body .wysiwyg--content {
+  color: #58585a;
+  font-size: 18px;
+  line-height: 26px;
+}
+
+.${slug} .${slug}__items-body .wysiwyg--content p {
+  margin: 0;
+}
+
+.${slug} .${slug}__items-body .wysiwyg--content p + ul {
+  margin-top: 16px;
+}
+
+.${slug} .${slug}__items-body .wysiwyg--content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.${slug} .${slug}__items-body .wysiwyg--content ul li {
+  position: relative;
+  padding-left: 32px;
+  font-weight: 500;
+  color: #58585a;
+  line-height: 26px;
+}
+
+.${slug} .${slug}__items-body .wysiwyg--content ul li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: #2a7f6e;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M3.5 8.2l2.8 2.8 6.2-6.2' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 12px 12px;
+}
+
+/* ─── Mobile (≤ 767px) — stacked, image always above content ──── */
+@media (max-width: 767px) {
+  .${slug} .${slug}__inner {
+    gap: 60px;
+  }
+  .${slug} .${slug}__items {
+    gap: 40px;
+  }
+  .${slug} .${slug}__items-item {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  /* On mobile, image is always first regardless of toggle */
+  .${slug} .${slug}__items .${slug}__items-image-wrap { order: 1 !important; }
+  .${slug} .${slug}__items .${slug}__items-body       { order: 2 !important; }
+  .${slug} .${slug}__items-body { padding: 0; }
 }
 `,
   },

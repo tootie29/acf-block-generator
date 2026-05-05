@@ -16,8 +16,10 @@ export function generateBlockCss(schema) {
     .map((f) => `.${slug}__${f.name.replace(/_/g, '-')}`)
     .filter((sel, i, arr) => arr.indexOf(sel) === i)
 
+  // Each stub is parent-scoped (.{slug} .{slug}__element) so it can never
+  // leak to siblings or other blocks that happen to share an element name.
   const elementStubs = elementSelectors
-    .map((sel) => `${sel} {\n  /* ${sel} styles */\n}`)
+    .map((sel) => `.${slug} ${sel} {\n  /* ${sel} styles */\n}`)
     .join('\n\n')
 
   // Template-level CSS extras (e.g. CTA layout + chevron animation)
@@ -85,7 +87,7 @@ export function generateBlockCss(schema) {
 /* ═══════════════════════════════════════════════════════════════════
  * 2 · Inner wrapper — flex column with consistent gap
  * ═══════════════════════════════════════════════════════════════════ */
-.${slug}__inner {
+.${slug} .${slug}__inner {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -98,7 +100,7 @@ export function generateBlockCss(schema) {
  *      contains "title". Wrapping tag is dynamic ($heading_tag): h1
  *      for hero blocks, h2 for inner blocks.
  * ═══════════════════════════════════════════════════════════════════ */
-.${slug}__heading {
+.${slug} .${slug}__heading {
   font-family: var(--heading-font, inherit);
   font-size: var(--font-size-h1);
   line-height: var(--line-height-h1);

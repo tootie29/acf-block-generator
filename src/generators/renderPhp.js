@@ -247,7 +247,10 @@ $use_global_settings = (bool) get_field( 'use_global_settings' );`
   const template = getTemplate(schema.template)
   const extraRender = template?.extraRender ? template.extraRender(schema) : ''
 
+  // Fields with `_skipRender: true` are still registered/fetched but not
+  // auto-rendered — used when a template's extraRender owns the markup.
   const innerBlock = fields
+    .filter((f) => !f._skipRender)
     .map((f) => {
       if (f === headingField) {
         const cls = `${slug}__heading`
