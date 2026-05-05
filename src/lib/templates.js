@@ -6,6 +6,8 @@ import repeatableImageContentDesktop from '../assets/templates/repeatable-image-
 import repeatableImageContentMobile from '../assets/templates/repeatable-image-content-mobile.png'
 import repeatableImageContentFullDesktop from '../assets/templates/repeatable-image-content-fullwidth-desktop.png'
 import repeatableImageContentFullMobile from '../assets/templates/repeatable-image-content-fullwidth-mobile.png'
+import plainWysiwygDesktop from '../assets/templates/plain-wysiwyg-desktop.png'
+import plainWysiwygMobile from '../assets/templates/plain-wysiwyg-mobile.png'
 
 // Build a field with a fresh React _uid + the type's default config, then merge
 // any overrides on top. Used by template `fields()` factories so every call
@@ -956,6 +958,140 @@ export const TEMPLATES = [
     line-height: 30px;
   }
   .${slug} .${slug}__items-bullet-text {
+    font-size: 18px;
+    line-height: 26px;
+  }
+}
+`,
+  },
+
+  {
+    id: 'plain_wysiwyg_section',
+    label: 'Plain WYSIWYG Section',
+    description:
+      'Heading + plain WYSIWYG body. Content spans the full inner width — single column with bullet list, paragraphs, or whatever the editor types into the rich-text field.',
+    preview: {
+      desktop: plainWysiwygDesktop,
+      mobile: plainWysiwygMobile,
+      caption: 'Heading + WYSIWYG body, full-width content',
+    },
+    suggestedSlug: 'plain-wysiwyg-section',
+    suggestedHeadingTag: 'h2',
+    fields: () => [
+      makeField('textarea', {
+        name: 'heading_title',
+        label: 'Heading',
+        rows: 2,
+        placeholder: 'Our Services',
+        instructions:
+          'Section heading. Renders inside the heading tag chosen in step 2 (h1 / h2). Wrap part of the text in <em>…</em> via the WYSIWYG-style approach is not available here — for an accent-color word use the body field instead, or theme the heading globally.',
+        width: 100,
+        required: true,
+      }),
+      makeField('wysiwyg', {
+        name: 'body',
+        label: 'Body (WYSIWYG)',
+        instructions:
+          'Free-form rich text. Bullet lists render with red brand markers; default scaffold handles paragraph rhythm.',
+        toolbar: 'full',
+        width: 100,
+      }),
+    ],
+
+    // No extraRender — heading + wysiwyg are auto-rendered by the default
+    // generator (heading_title is auto-promoted to <?php echo $heading_tag; ?>
+    // because its name contains "title"; the WYSIWYG goes into .wysiwyg--content).
+
+    extraCss: ({ slug }) => `
+/* ═══════════════════════════════════════════════════════════════════
+ * Plain WYSIWYG Section — heading + full-width rich-text body.
+ *   All selectors below are scoped under .${slug}.
+ * ═══════════════════════════════════════════════════════════════════ */
+.${slug} {
+  background-color: #ffffff;
+}
+
+.${slug} .${slug}__inner {
+  width: 100%;
+  max-width: 100%;
+  gap: 40px;
+}
+
+.${slug} .${slug}__heading {
+  font-family: var(--heading-font, "Lato", system-ui, sans-serif);
+  font-weight: 700;
+  font-size: clamp(32px, 5vw, 48px);
+  line-height: 1.21;
+  color: #1b2540;
+  text-transform: capitalize;
+  margin: 0;
+  width: 100%;
+}
+
+/* Optional accent: editors can wrap part of the heading in <em>…</em>
+   to color it with the brand secondary. The default scaffold strips
+   wrapping markup from text fields, so this hook only applies if the
+   heading is later upgraded to a richer field. */
+.${slug} .${slug}__heading em {
+  color: #e81a3f;
+  font-style: normal;
+}
+
+/* WYSIWYG body — full inner width, brand-red bullet markers. */
+.${slug} .wysiwyg--content {
+  width: 100%;
+  color: #515151;
+  font-size: 22px;
+  line-height: 30px;
+}
+
+.${slug} .wysiwyg--content p {
+  margin: 0;
+  color: #515151;
+}
+
+.${slug} .wysiwyg--content ul {
+  list-style: disc;
+  padding-left: 1.5em;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.${slug} .wysiwyg--content ul li {
+  color: #515151;
+  padding-left: 4px;
+}
+
+.${slug} .wysiwyg--content ul li::marker {
+  color: #e81a3f; /* brand-red bullet markers */
+}
+
+.${slug} .wysiwyg--content ol {
+  margin: 0;
+  padding-left: 1.5em;
+}
+
+.${slug} .wysiwyg--content a {
+  color: #e81a3f;
+  text-decoration: underline;
+}
+
+.${slug} .wysiwyg--content a:hover,
+.${slug} .wysiwyg--content a:focus-visible {
+  color: #1b2540;
+}
+
+@media (max-width: 767px) {
+  .${slug} .${slug}__inner {
+    gap: 24px;
+  }
+  .${slug} .${slug}__heading {
+    font-size: clamp(28px, 7vw, 32px);
+    line-height: 1.25;
+  }
+  .${slug} .wysiwyg--content {
     font-size: 18px;
     line-height: 26px;
   }
