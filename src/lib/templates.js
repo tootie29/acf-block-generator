@@ -418,11 +418,23 @@ export const TEMPLATES = [
   width: 100%;
 }
 
+/* Two-column row — agency convention: always size columns in percentages
+   (max-width: 50%, width: 100%) instead of grid 1fr units, so the layout
+   degrades predictably across container queries / fluid contexts.
+   align-items: stretch makes the image column track the content column's
+   height (whichever ends up taller drives the row). */
 .${slug} .${slug}__items-item {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
   gap: 80px;
+}
+
+.${slug} .${slug}__items-image-wrap,
+.${slug} .${slug}__items-body {
+  width: 100%;
+  max-width: 50%;
+  flex: 0 1 calc(50% - 40px); /* 50% minus half the gap so two columns + gap fit on one row */
 }
 
 /* First row image side: left (default) ⇒ image first.
@@ -440,12 +452,18 @@ export const TEMPLATES = [
 .${slug} .${slug}__items-image-wrap {
   position: relative;
   width: 100%;
+  /* Stretch to match the row height set by the content column.
+     min-height: 100% lets it grow with the body even when the
+     image's intrinsic height is shorter. */
+  min-height: 100%;
+  display: flex;
 }
 
 .${slug} .${slug}__items-image {
   width: 100%;
-  height: auto;
+  height: 100%;
   display: block;
+  object-fit: cover;
   border-radius: 4px;
   box-shadow: 0 24px 40px -16px rgba(0, 0, 0, 0.18);
 }
@@ -453,6 +471,7 @@ export const TEMPLATES = [
 .${slug} .${slug}__items-body {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 24px;
   padding: 40px 0;
 }
@@ -523,13 +542,27 @@ export const TEMPLATES = [
     gap: 40px;
   }
   .${slug} .${slug}__items-item {
-    grid-template-columns: 1fr;
     gap: 24px;
+  }
+  /* Mobile: each column expands to full row width */
+  .${slug} .${slug}__items-image-wrap,
+  .${slug} .${slug}__items-body {
+    max-width: 100%;
+    flex: 0 1 100%;
+  }
+  /* Reset desktop height-matching — on mobile each row has only one
+     column, so the image returns to its natural aspect ratio. */
+  .${slug} .${slug}__items-image-wrap {
+    min-height: auto;
+    display: block;
+  }
+  .${slug} .${slug}__items-image {
+    height: auto;
   }
   /* On mobile, image is always first regardless of toggle */
   .${slug} .${slug}__items .${slug}__items-image-wrap { order: 1 !important; }
   .${slug} .${slug}__items .${slug}__items-body       { order: 2 !important; }
-  .${slug} .${slug}__items-body { padding: 0; }
+  .${slug} .${slug}__items-body { padding: 0; justify-content: flex-start; }
 }
 `,
   },
