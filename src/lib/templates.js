@@ -4,6 +4,8 @@ import ctaDesktop from '../assets/templates/cta-desktop.png'
 import ctaMobile from '../assets/templates/cta-mobile.png'
 import repeatableImageContentDesktop from '../assets/templates/repeatable-image-content-desktop.png'
 import repeatableImageContentMobile from '../assets/templates/repeatable-image-content-mobile.png'
+import repeatableImageContentFullDesktop from '../assets/templates/repeatable-image-content-fullwidth-desktop.png'
+import repeatableImageContentFullMobile from '../assets/templates/repeatable-image-content-fullwidth-mobile.png'
 
 // Build a field with a fresh React _uid + the type's default config, then merge
 // any overrides on top. Used by template `fields()` factories so every call
@@ -572,6 +574,391 @@ export const TEMPLATES = [
   .${slug} .${slug}__items .${slug}__items-image-wrap { order: 1 !important; }
   .${slug} .${slug}__items .${slug}__items-body       { order: 2 !important; }
   .${slug} .${slug}__items-body { padding: 0; justify-content: flex-start; }
+}
+`,
+  },
+
+  {
+    id: 'repeatable_image_content_fullwidth',
+    label: 'Repeatable Image + Content (Full-width)',
+    description:
+      'Full-bleed variant of the Repeatable Image + Content section. Each row has an edge-bleeding image (rounded inner corner) and a content column with structured bullets (heading + description). White section background by default; first-row image side is editor-controlled and subsequent rows alternate.',
+    preview: {
+      desktop: repeatableImageContentFullDesktop,
+      mobile: repeatableImageContentFullMobile,
+      caption: 'Full-width image bleed + structured bullets',
+    },
+    suggestedSlug: 'repeatable-image-content-fullwidth',
+    suggestedHeadingTag: 'h2',
+    fields: () => [
+      makeField('button_group', {
+        name: 'first_image_position',
+        label: 'First row image position',
+        choices: 'left : Image left\nright : Image right',
+        default_value: 'left',
+        allow_null: false,
+        instructions:
+          'Position of the first row image. Subsequent rows alternate automatically (every other row flips sides).',
+        width: 100,
+      }),
+      makeField('repeater', {
+        name: 'items',
+        label: 'Items',
+        button_label: 'Add Row',
+        min: 1,
+        max: 0,
+        instructions:
+          'Each row renders full-bleed: image on one side touching the viewport edge, content + structured bullets on the other side.',
+        width: 100,
+        _skipRender: true, // template owns the loop markup so it can apply alternating layout + rounded-corner side
+        subFields: [
+          {
+            ...defaultFieldConfig('image'),
+            name: 'image',
+            label: 'Image',
+            return_format: 'id',
+            imageSize: 'full',
+            width: 50,
+          },
+          {
+            ...defaultFieldConfig('textarea'),
+            name: 'item_heading',
+            label: 'Item heading',
+            rows: 2,
+            placeholder: 'Reasons you should not ignore signs of …',
+            width: 50,
+          },
+          {
+            ...defaultFieldConfig('wysiwyg'),
+            name: 'intro_text',
+            label: 'Intro paragraph',
+            toolbar: 'basic',
+            instructions: 'Paragraph above the bullets list.',
+            width: 100,
+          },
+          {
+            ...defaultFieldConfig('repeater'),
+            name: 'bullets',
+            label: 'Bullets',
+            button_label: 'Add Bullet',
+            min: 0,
+            max: 0,
+            width: 100,
+            subFields: [
+              {
+                ...defaultFieldConfig('text'),
+                name: 'bullet_heading',
+                label: 'Bullet heading',
+                placeholder: 'Loss of sensation',
+                width: 50,
+              },
+              {
+                ...defaultFieldConfig('textarea'),
+                name: 'bullet_text',
+                label: 'Bullet text',
+                rows: 3,
+                width: 50,
+              },
+            ],
+          },
+          {
+            ...defaultFieldConfig('wysiwyg'),
+            name: 'outro_text',
+            label: 'Outro paragraph',
+            toolbar: 'basic',
+            instructions: 'Paragraph below the bullets list.',
+            width: 100,
+          },
+        ],
+      }),
+    ],
+
+    // Owns the items loop so it can apply the alternating-row modifier and
+    // emit the structured-bullet markup (heading + description per bullet).
+    extraRender: ({ slug }) => `    <?php
+    $first_image_position = get_field( 'first_image_position' ) ?: 'left';
+    ?>
+
+    <?php if ( have_rows( 'items' ) ) : ?>
+      <div class="${slug}__items ${slug}__items--first-<?php echo esc_attr( $first_image_position ); ?>">
+        <?php while ( have_rows( 'items' ) ) : the_row();
+          $item_image   = get_sub_field( 'image' );
+          $item_heading = get_sub_field( 'item_heading' );
+          $intro_text   = get_sub_field( 'intro_text' );
+          $outro_text   = get_sub_field( 'outro_text' );
+        ?>
+          <div class="${slug}__items-item">
+            <?php if ( $item_image ) : ?>
+              <div class="${slug}__items-image-wrap">
+                <?php echo wp_get_attachment_image( $item_image, 'full', false, [
+                  'class'   => '${slug}__items-image',
+                  'loading' => 'lazy',
+                ] ); ?>
+              </div>
+            <?php endif; ?>
+
+            <div class="${slug}__items-body">
+              <?php if ( $item_heading ) : ?>
+                <h3 class="${slug}__items-heading"><?php echo esc_html( $item_heading ); ?></h3>
+              <?php endif; ?>
+
+              <?php if ( $intro_text ) : ?>
+                <div class="${slug}__items-intro wysiwyg--content">
+                  <?php echo wp_kses_post( $intro_text ); ?>
+                </div>
+              <?php endif; ?>
+
+              <?php if ( have_rows( 'bullets' ) ) : ?>
+                <div class="${slug}__items-bullets">
+                  <?php while ( have_rows( 'bullets' ) ) : the_row();
+                    $bullet_heading = get_sub_field( 'bullet_heading' );
+                    $bullet_text    = get_sub_field( 'bullet_text' );
+                  ?>
+                    <div class="${slug}__items-bullet">
+                      <span class="${slug}__items-bullet-icon" aria-hidden="true"></span>
+                      <div class="${slug}__items-bullet-content">
+                        <?php if ( $bullet_heading ) : ?>
+                          <p class="${slug}__items-bullet-heading"><?php echo esc_html( $bullet_heading ); ?></p>
+                        <?php endif; ?>
+                        <?php if ( $bullet_text ) : ?>
+                          <p class="${slug}__items-bullet-text"><?php echo nl2br( esc_html( $bullet_text ) ); ?></p>
+                        <?php endif; ?>
+                      </div>
+                    </div>
+                  <?php endwhile; ?>
+                </div>
+              <?php endif; ?>
+
+              <?php if ( $outro_text ) : ?>
+                <div class="${slug}__items-outro wysiwyg--content">
+                  <?php echo wp_kses_post( $outro_text ); ?>
+                </div>
+              <?php endif; ?>
+            </div>
+          </div>
+        <?php endwhile; ?>
+      </div>
+    <?php endif; ?>`,
+
+    extraCss: ({ slug }) => `
+/* ═══════════════════════════════════════════════════════════════════
+ * Repeatable Image + Content (Full-width) — image bleeds to viewport
+ * edge, content column padded inside. White default background.
+ *   All selectors below are scoped under .${slug}.
+ * ═══════════════════════════════════════════════════════════════════ */
+.${slug} {
+  background-color: #ffffff;
+  font-family: var(--paragraph-font, "Lato", system-ui, sans-serif);
+  color: #3a3a3b;
+  /* Full-bleed: drop horizontal padding so image touches the section edge. */
+  padding: 0;
+}
+
+.${slug} .${slug}__inner {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  gap: 0;
+  align-items: stretch;
+}
+
+.${slug} .${slug}__items {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Two-column row — full bleed on the image side, percentage widths only.
+   align-items: stretch keeps the image column matching the content column. */
+.${slug} .${slug}__items-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  width: 100%;
+}
+
+.${slug} .${slug}__items-image-wrap,
+.${slug} .${slug}__items-body {
+  width: 100%;
+  max-width: 50%;
+  flex: 0 1 50%;
+}
+
+/* First row image side: left (default) ⇒ image first; even rows flip. */
+.${slug} .${slug}__items--first-left  .${slug}__items-item:nth-child(odd)  .${slug}__items-image-wrap { order: 1; }
+.${slug} .${slug}__items--first-left  .${slug}__items-item:nth-child(odd)  .${slug}__items-body       { order: 2; }
+.${slug} .${slug}__items--first-left  .${slug}__items-item:nth-child(even) .${slug}__items-image-wrap { order: 2; }
+.${slug} .${slug}__items--first-left  .${slug}__items-item:nth-child(even) .${slug}__items-body       { order: 1; }
+
+.${slug} .${slug}__items--first-right .${slug}__items-item:nth-child(odd)  .${slug}__items-image-wrap { order: 2; }
+.${slug} .${slug}__items--first-right .${slug}__items-item:nth-child(odd)  .${slug}__items-body       { order: 1; }
+.${slug} .${slug}__items--first-right .${slug}__items-item:nth-child(even) .${slug}__items-image-wrap { order: 1; }
+.${slug} .${slug}__items--first-right .${slug}__items-item:nth-child(even) .${slug}__items-body       { order: 2; }
+
+/* Image column — touches the viewport edge on its outer side, rounded
+   corners on the inner (content-facing) side. */
+.${slug} .${slug}__items-image-wrap {
+  position: relative;
+  min-height: 100%;
+  overflow: hidden;
+  display: flex;
+}
+
+.${slug} .${slug}__items-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+/* Rounded inner corner: when image is on the right (order: 2), curve
+   the LEFT edge. When image is on the left (order: 1), curve the RIGHT
+   edge. Driven by the same nth-child + modifier rules as ordering. */
+.${slug} .${slug}__items--first-left  .${slug}__items-item:nth-child(odd)  .${slug}__items-image-wrap { border-radius: 0 100px 100px 0; }
+.${slug} .${slug}__items--first-left  .${slug}__items-item:nth-child(even) .${slug}__items-image-wrap { border-radius: 100px 0 0 100px; }
+.${slug} .${slug}__items--first-right .${slug}__items-item:nth-child(odd)  .${slug}__items-image-wrap { border-radius: 100px 0 0 100px; }
+.${slug} .${slug}__items--first-right .${slug}__items-item:nth-child(even) .${slug}__items-image-wrap { border-radius: 0 100px 100px 0; }
+
+/* Content column — padded inside; outer edge breathes against viewport,
+   inner edge gives the bullets/text room from the image. */
+.${slug} .${slug}__items-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  padding: 80px;
+}
+
+.${slug} .${slug}__items-heading {
+  font-family: var(--heading-font, "Lato", system-ui, sans-serif);
+  font-weight: 800;
+  font-size: clamp(36px, 4vw, 48px);
+  line-height: 1.16;
+  color: #000;
+  margin: 0;
+  width: 100%;
+}
+
+.${slug} .${slug}__items-intro,
+.${slug} .${slug}__items-outro {
+  font-size: 20px;
+  line-height: 30px;
+  color: #3a3a3b;
+  width: 100%;
+  max-width: 65ch;
+}
+
+.${slug} .${slug}__items-intro p,
+.${slug} .${slug}__items-outro p {
+  margin: 0;
+}
+
+/* ─── Bullets — light row backgrounds with thin dark dividers ──── */
+.${slug} .${slug}__items-bullets {
+  width: 100%;
+  background-color: #d9d9d9; /* shows through the 2px gaps as dividers */
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 2px;
+}
+
+.${slug} .${slug}__items-bullet {
+  background-color: #f2f2f2;
+  display: flex;
+  gap: 8px;
+  padding: 12px 6px;
+  align-items: flex-start;
+}
+
+/* Decorative checkmark icon — fixed pixel size is intentional (artwork). */
+.${slug} .${slug}__items-bullet-icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background-color: #2d7fb8;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M3.5 8.2l2.8 2.8 6.2-6.2' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 12px 12px;
+}
+
+.${slug} .${slug}__items-bullet-content {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.${slug} .${slug}__items-bullet-heading {
+  font-family: var(--heading-font, "Lato", system-ui, sans-serif);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 32px;
+  color: #000;
+  margin: 0;
+}
+
+.${slug} .${slug}__items-bullet-text {
+  font-size: 20px;
+  line-height: 30px;
+  color: #404040;
+  margin: 0;
+}
+
+/* ─── Mobile (≤ 767px) — image full-width on top, no rounding ───── */
+@media (max-width: 767px) {
+  .${slug} .${slug}__items-item {
+    flex-direction: column;
+  }
+  .${slug} .${slug}__items-image-wrap,
+  .${slug} .${slug}__items-body {
+    max-width: 100%;
+    flex: 0 1 100%;
+  }
+  /* Image returns to natural aspect ratio at the top, with no rounding. */
+  .${slug} .${slug}__items-image-wrap {
+    min-height: auto;
+    display: block;
+    border-radius: 0 !important;
+    aspect-ratio: 16 / 12;
+  }
+  .${slug} .${slug}__items-image {
+    height: 100%;
+  }
+  /* On mobile, image always above content regardless of toggle. */
+  .${slug} .${slug}__items .${slug}__items-image-wrap { order: 1 !important; }
+  .${slug} .${slug}__items .${slug}__items-body       { order: 2 !important; }
+
+  .${slug} .${slug}__items-body {
+    padding: 24px 20px 40px;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+  .${slug} .${slug}__items-heading {
+    font-size: clamp(24px, 7vw, 30px);
+    line-height: 1.33;
+  }
+  .${slug} .${slug}__items-intro,
+  .${slug} .${slug}__items-outro {
+    font-size: 18px;
+    line-height: 26px;
+  }
+  .${slug} .${slug}__items-bullet {
+    padding: 16px 6px;
+  }
+  .${slug} .${slug}__items-bullet-heading {
+    font-size: 22px;
+    line-height: 30px;
+  }
+  .${slug} .${slug}__items-bullet-text {
+    font-size: 18px;
+    line-height: 26px;
+  }
 }
 `,
   },
