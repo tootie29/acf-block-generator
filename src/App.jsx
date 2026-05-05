@@ -2,6 +2,8 @@ import { useMemo, useState, useEffect } from 'react'
 import FieldList from './components/FieldList.jsx'
 import CodePreview from './components/CodePreview.jsx'
 import TemplatePreview from './components/TemplatePreview.jsx'
+import Sidebar from './components/Sidebar.jsx'
+import TemplatesGallery from './components/TemplatesGallery.jsx'
 import { toSlug, detectLibraries } from './lib/utils.js'
 import { TEMPLATES, getTemplate } from './lib/templates.js'
 import { buildZip, triggerDownload } from './generators/index.js'
@@ -26,6 +28,8 @@ const DEFAULT_SCHEMA = {
 }
 
 export default function App() {
+  const [view, setView] = useState('generator') // 'generator' | 'templates'
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true) // default small
   const [schema, setSchema] = useState(DEFAULT_SCHEMA)
 
   // Derived: slug + library detection
@@ -101,10 +105,29 @@ export default function App() {
     .filter(([, on]) => on)
     .map(([name]) => name)
 
+  const handleUseTemplateFromGallery = (templateId) => {
+    handleTemplateChange(templateId)
+    setView('generator')
+  }
+
   return (
-    <div className="app">
-      {/* ───────── LEFT: Configuration panel ───────── */}
-      <div className="panel">
+    <div className={`app-shell ${sidebarCollapsed ? 'is-sidebar-collapsed' : ''}`}>
+      <Sidebar
+        view={view}
+        onChange={setView}
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed((c) => !c)}
+      />
+
+      {view === 'templates' ? (
+        <main className="app-main app-main--gallery">
+          <TemplatesGallery onUseTemplate={handleUseTemplateFromGallery} />
+        </main>
+      ) : (
+        <main className="app-main app-main--generator">
+          <div className="app">
+            {/* ───────── LEFT: Configuration panel ───────── */}
+            <div className="panel">
         <h1>
           ACF Block Generator <span className="badge">RichardMedina</span>
         </h1>
@@ -314,11 +337,14 @@ export default function App() {
       </div>
 
       {/* ───────── RIGHT: Live preview ───────── */}
-      <div className="panel">
-        <h1>Live Preview</h1>
-        <p className="subtitle">Generated files update as you edit. Click a tab to inspect.</p>
-        <CodePreview schema={fullSchema} />
-      </div>
+            <div className="panel">
+              <h1>Live Preview</h1>
+              <p className="subtitle">Generated files update as you edit. Click a tab to inspect.</p>
+              <CodePreview schema={fullSchema} />
+            </div>
+          </div>
+        </main>
+      )}
     </div>
   )
 }
