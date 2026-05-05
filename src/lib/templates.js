@@ -356,10 +356,14 @@ export const TEMPLATES = [
           <div class="${slug}__items-item">
             <?php if ( $item_image ) : ?>
               <div class="${slug}__items-image-wrap">
-                <?php echo wp_get_attachment_image( $item_image, 'large', false, [
-                  'class'   => '${slug}__items-image',
-                  'loading' => 'lazy',
-                ] ); ?>
+                <?php if ( shortcode_exists( 'sge_srcset' ) ) : ?>
+                  <?php echo do_shortcode( '[sge_srcset id="' . absint( $item_image ) . '" size="large" class="${slug}__items-image"]' ); ?>
+                <?php else : ?>
+                  <?php echo wp_get_attachment_image( $item_image, 'large', false, [
+                    'class'   => '${slug}__items-image',
+                    'loading' => 'lazy',
+                  ] ); ?>
+                <?php endif; ?>
               </div>
             <?php endif; ?>
 
@@ -692,10 +696,14 @@ export const TEMPLATES = [
           <div class="${slug}__items-item">
             <?php if ( $item_image ) : ?>
               <div class="${slug}__items-image-wrap">
-                <?php echo wp_get_attachment_image( $item_image, 'full', false, [
-                  'class'   => '${slug}__items-image',
-                  'loading' => 'lazy',
-                ] ); ?>
+                <?php if ( shortcode_exists( 'sge_srcset' ) ) : ?>
+                  <?php echo do_shortcode( '[sge_srcset id="' . absint( $item_image ) . '" size="full" class="${slug}__items-image"]' ); ?>
+                <?php else : ?>
+                  <?php echo wp_get_attachment_image( $item_image, 'full', false, [
+                    'class'   => '${slug}__items-image',
+                    'loading' => 'lazy',
+                  ] ); ?>
+                <?php endif; ?>
               </div>
             <?php endif; ?>
 

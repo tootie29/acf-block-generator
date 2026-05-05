@@ -45,6 +45,8 @@ ${pad}<?php endif; ?>`
       // Hero + featured-fallback combo: render <picture> with the featured
       // image as the mobile <source>. Hero LCP images load eagerly.
       // This path requires attachment IDs, so it forces id-format regardless.
+      // The desktop <img> tries the agency [sge_srcset] shortcode first and
+      // falls back to wp_get_attachment_image() when the shortcode is absent.
       if (isHero && field.useFeatured) {
         return `${pad}<?php if ( $${field.name} ) : ?>
 ${pad}  <div class="${cls}-wrap">
@@ -58,31 +60,42 @@ ${pad}      ?>
 ${pad}      <?php if ( $${field.name}_mobile_url ) : ?>
 ${pad}        <source media="(max-width: 768px)" srcset="<?php echo esc_url( $${field.name}_mobile_url ); ?>">
 ${pad}      <?php endif; ?>
-${pad}      <?php echo wp_get_attachment_image( $${field.name}, '${sz}', false, [
-${pad}        'class'   => '${cls}',
-${pad}        'loading' => 'eager',
-${pad}        'fetchpriority' => 'high',
-${pad}      ] ); ?>
+${pad}      <?php if ( shortcode_exists( 'sge_srcset' ) ) : ?>
+${pad}        <?php echo do_shortcode( '[sge_srcset id="' . absint( $${field.name} ) . '" size="${sz}" class="${cls}" loading="eager" fetchpriority="high"]' ); ?>
+${pad}      <?php else : ?>
+${pad}        <?php echo wp_get_attachment_image( $${field.name}, '${sz}', false, [
+${pad}          'class'         => '${cls}',
+${pad}          'loading'       => 'eager',
+${pad}          'fetchpriority' => 'high',
+${pad}        ] ); ?>
+${pad}      <?php endif; ?>
 ${pad}    </picture>
 ${pad}  </div>
 ${pad}<?php endif; ?>`
       }
 
-      // return_format: 'array' — ACF returns an array of image data
+      // return_format: 'array' — ACF returns an array of image data. When the
+      // sge_srcset shortcode is present we still pass the attachment ID; we
+      // only fall back to a hand-built <img> when the shortcode isn't loaded.
       if (fmt === 'array') {
         return `${pad}<?php if ( $${field.name} && ! empty( $${field.name}['url'] ) ) : ?>
 ${pad}  <div class="${cls}-wrap">
-${pad}    <img class="${cls}"
-${pad}         src="<?php echo esc_url( $${field.name}['sizes']['${sz}'] ?? $${field.name}['url'] ); ?>"
-${pad}         alt="<?php echo esc_attr( $${field.name}['alt'] ); ?>"
-${pad}         width="<?php echo esc_attr( $${field.name}['width'] ); ?>"
-${pad}         height="<?php echo esc_attr( $${field.name}['height'] ); ?>"
-${pad}         loading="lazy" />
+${pad}    <?php if ( shortcode_exists( 'sge_srcset' ) && ! empty( $${field.name}['ID'] ) ) : ?>
+${pad}      <?php echo do_shortcode( '[sge_srcset id="' . absint( $${field.name}['ID'] ) . '" size="${sz}" class="${cls}"]' ); ?>
+${pad}    <?php else : ?>
+${pad}      <img class="${cls}"
+${pad}           src="<?php echo esc_url( $${field.name}['sizes']['${sz}'] ?? $${field.name}['url'] ); ?>"
+${pad}           alt="<?php echo esc_attr( $${field.name}['alt'] ); ?>"
+${pad}           width="<?php echo esc_attr( $${field.name}['width'] ); ?>"
+${pad}           height="<?php echo esc_attr( $${field.name}['height'] ); ?>"
+${pad}           loading="lazy" />
+${pad}    <?php endif; ?>
 ${pad}  </div>
 ${pad}<?php endif; ?>`
       }
 
-      // return_format: 'url' — ACF returns a plain URL string (link to full)
+      // return_format: 'url' — ACF returns a plain URL string with no
+      // attachment ID, so the sge_srcset shortcode cannot be used here.
       if (fmt === 'url') {
         return `${pad}<?php if ( $${field.name} ) : ?>
 ${pad}  <div class="${cls}-wrap">
@@ -91,13 +104,18 @@ ${pad}  </div>
 ${pad}<?php endif; ?>`
       }
 
-      // return_format: 'id' (default) — wp_get_attachment_image() handles srcset/alt
+      // return_format: 'id' (default) — try the agency [sge_srcset] shortcode
+      // first, fall back to wp_get_attachment_image() when it's not registered.
       return `${pad}<?php if ( $${field.name} ) : ?>
 ${pad}  <div class="${cls}-wrap">
-${pad}    <?php echo wp_get_attachment_image( $${field.name}, '${sz}', false, [
-${pad}      'class'   => '${cls}',
-${pad}      'loading' => 'lazy',
-${pad}    ] ); ?>
+${pad}    <?php if ( shortcode_exists( 'sge_srcset' ) ) : ?>
+${pad}      <?php echo do_shortcode( '[sge_srcset id="' . absint( $${field.name} ) . '" size="${sz}" class="${cls}"]' ); ?>
+${pad}    <?php else : ?>
+${pad}      <?php echo wp_get_attachment_image( $${field.name}, '${sz}', false, [
+${pad}        'class'   => '${cls}',
+${pad}        'loading' => 'lazy',
+${pad}      ] ); ?>
+${pad}    <?php endif; ?>
 ${pad}  </div>
 ${pad}<?php endif; ?>`
     }
@@ -105,10 +123,14 @@ ${pad}<?php endif; ?>`
       return `${pad}<?php if ( $${field.name} && is_array( $${field.name} ) ) : ?>
 ${pad}  <div class="${cls}">
 ${pad}    <?php foreach ( $${field.name} as $g_img ) : ?>
-${pad}      <?php echo wp_get_attachment_image( $g_img['ID'], 'large', false, [
-${pad}        'class'   => '${cls}__item',
-${pad}        'loading' => 'lazy',
-${pad}      ] ); ?>
+${pad}      <?php if ( shortcode_exists( 'sge_srcset' ) ) : ?>
+${pad}        <?php echo do_shortcode( '[sge_srcset id="' . absint( $g_img['ID'] ) . '" size="large" class="${cls}__item"]' ); ?>
+${pad}      <?php else : ?>
+${pad}        <?php echo wp_get_attachment_image( $g_img['ID'], 'large', false, [
+${pad}          'class'   => '${cls}__item',
+${pad}          'loading' => 'lazy',
+${pad}        ] ); ?>
+${pad}      <?php endif; ?>
 ${pad}    <?php endforeach; ?>
 ${pad}  </div>
 ${pad}<?php endif; ?>`
