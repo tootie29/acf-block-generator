@@ -23,6 +23,10 @@ function templateToSchema(template) {
       hasCustomJs: false,
       possibleHero: false,
       hasGlobalSettings: false,
+      // Templates can lock specific options ON (e.g. doctor_profile forces
+      // hasGlobalSettings). Merge them last so they override the defaults
+      // above for direct gallery downloads.
+      ...(template.forceOptions || {}),
     },
     libraries: { tabs: false, slider: false, accordion: false },
     fields: template.fields(),
