@@ -69,8 +69,13 @@ export default function App() {
     const template = getTemplate(nextId)
     const presetFields = template.fields()
 
+    // Templates can lock specific options ON (e.g. doctor_profile forces
+    // hasGlobalSettings). Merge those into the existing options so the
+    // matching toggle becomes both checked and disabled in step 4.
+    const mergedOptions = { ...schema.options, ...(template.forceOptions || {}) }
+
     if (presetFields.length === 0) {
-      setSchema({ ...schema, template: nextId })
+      setSchema({ ...schema, template: nextId, options: mergedOptions })
       return
     }
 
@@ -83,7 +88,12 @@ export default function App() {
       return
     }
 
-    setSchema({ ...schema, template: nextId, fields: presetFields })
+    setSchema({
+      ...schema,
+      template: nextId,
+      fields: presetFields,
+      options: mergedOptions,
+    })
   }
 
   const handleDownload = async () => {
@@ -282,9 +292,15 @@ export default function App() {
               type="checkbox"
               checked={schema.options.hasGlobalSettings}
               onChange={(e) => updateOption('hasGlobalSettings', e.target.checked)}
+              disabled={!!selectedTemplate?.forceOptions?.hasGlobalSettings}
             />
             <div className="label-text">
               Add Global Settings (options page)
+              {selectedTemplate?.forceOptions?.hasGlobalSettings && (
+                <span className="lib-tag" style={{ marginLeft: 8 }}>
+                  required by {selectedTemplate.label}
+                </span>
+              )}
               <span className="desc">
                 Generates <code>global-fields.php</code> mirroring all custom fields on an ACF options page.
                 Adds a <code>use_global_settings</code> toggle to the block — when ON, every field reads from the options page instead of the block.

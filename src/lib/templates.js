@@ -8,6 +8,8 @@ import repeatableImageContentFullDesktop from '../assets/templates/repeatable-im
 import repeatableImageContentFullMobile from '../assets/templates/repeatable-image-content-fullwidth-mobile.png'
 import plainWysiwygDesktop from '../assets/templates/plain-wysiwyg-desktop.png'
 import plainWysiwygMobile from '../assets/templates/plain-wysiwyg-mobile.png'
+import doctorProfileDesktop from '../assets/templates/doctor-profile-desktop.png'
+import doctorProfileMobile from '../assets/templates/doctor-profile-mobile.png'
 
 // Build a field with a fresh React _uid + the type's default config, then merge
 // any overrides on top. Used by template `fields()` factories so every call
@@ -1102,6 +1104,330 @@ export const TEMPLATES = [
   .${slug} .wysiwyg--content {
     font-size: 18px;
     line-height: 26px;
+  }
+}
+`,
+  },
+
+  {
+    id: 'doctor_profile',
+    label: 'Doctor Profile Section',
+    description:
+      'Two-column doctor card: photo on the left, name + credentials list + specialty + bio + CTA on the right. Image stretches to match the body height with a desktop min-height floor (no min-height on mobile). Always backed by global settings — flip the per-block "Use global settings" toggle OFF to override values for one page.',
+    preview: {
+      desktop: doctorProfileDesktop,
+      mobile: doctorProfileMobile,
+      caption: 'Image left + name / credentials / bio / CTA right',
+    },
+    suggestedSlug: 'doctor-profile',
+    suggestedHeadingTag: 'h2',
+    // Locked options — App.jsx merges these into schema.options when the
+    // template is selected and disables the matching checkboxes in step 4.
+    forceOptions: { hasGlobalSettings: true },
+    fields: () => [
+      makeField('image', {
+        name: 'doctor_image',
+        label: 'Doctor photo',
+        instructions: 'Portrait orientation works best. Image renders on the left at desktop, full-width above the body on mobile.',
+        return_format: 'id',
+        imageSize: 'large',
+        width: 100,
+        _skipRender: true,
+      }),
+      makeField('text', {
+        name: 'doctor_name',
+        label: 'Doctor name',
+        placeholder: 'Dr. Jane Smith',
+        instructions: 'Renders inside the heading tag chosen in step 2 (h1 / h2).',
+        width: 100,
+        required: true,
+        _skipRender: true,
+      }),
+      makeField('repeater', {
+        name: 'credentials',
+        label: 'Credentials',
+        button_label: 'Add credential',
+        min: 0,
+        max: 0,
+        instructions: 'One credential per row (e.g. "MD", "FACS", "Board-certified"). Renders as a comma-separated inline list under the name.',
+        width: 100,
+        _skipRender: true,
+        subFields: [
+          {
+            ...defaultFieldConfig('text'),
+            name: 'credential',
+            label: 'Credential',
+            placeholder: 'MD, FACS, Board-certified',
+            width: 100,
+          },
+        ],
+      }),
+      makeField('text', {
+        name: 'specialty',
+        label: 'Specialty',
+        placeholder: 'Plastic & Reconstructive Surgery',
+        instructions: 'Subtitle below the credentials line. Optional.',
+        width: 100,
+        _skipRender: true,
+      }),
+      makeField('wysiwyg', {
+        name: 'bio',
+        label: 'Bio',
+        instructions: 'Free-form rich text — paragraphs, lists, links.',
+        toolbar: 'basic',
+        width: 100,
+        _skipRender: true,
+      }),
+      makeField('text', {
+        name: 'cta_label',
+        label: 'CTA label',
+        placeholder: 'Book a consultation',
+        instructions: 'Button text. Leave empty (with the link empty too) to hide the CTA.',
+        width: 50,
+        _skipRender: true,
+      }),
+      makeField('url', {
+        name: 'cta_link',
+        label: 'CTA link',
+        placeholder: 'https://example.com/book',
+        instructions: 'Button destination URL. CTA only renders when both label and link are set.',
+        width: 50,
+        _skipRender: true,
+      }),
+    ],
+
+    // Owns the entire layout markup — every doctor field is _skipRender so
+    // the auto-renderer leaves them alone and we control image/body order.
+    extraRender: ({ slug }) => `    <div class="${slug}__layout">
+      <?php if ( $doctor_image ) : ?>
+        <div class="${slug}__image-wrap">
+          <?php if ( shortcode_exists( 'sge_srcset' ) ) : ?>
+            <?php echo do_shortcode( '[sge_srcset id="' . absint( $doctor_image ) . '" size="large" class="${slug}__image"]' ); ?>
+          <?php else : ?>
+            <?php echo wp_get_attachment_image( $doctor_image, 'large', false, [
+              'class'   => '${slug}__image',
+              'loading' => 'lazy',
+            ] ); ?>
+          <?php endif; ?>
+        </div>
+      <?php endif; ?>
+
+      <div class="${slug}__body">
+        <?php if ( $doctor_name ) : ?>
+          <<?php echo $heading_tag; ?> class="${slug}__heading"><?php echo esc_html( $doctor_name ); ?></<?php echo $heading_tag; ?>>
+        <?php endif; ?>
+
+        <?php if ( have_rows( 'credentials' ) ) : ?>
+          <ul class="${slug}__credentials">
+            <?php while ( have_rows( 'credentials' ) ) : the_row();
+              $credential = get_sub_field( 'credential' );
+              if ( ! $credential ) { continue; }
+            ?>
+              <li class="${slug}__credentials-item"><?php echo esc_html( $credential ); ?></li>
+            <?php endwhile; ?>
+          </ul>
+        <?php endif; ?>
+
+        <?php if ( $specialty ) : ?>
+          <p class="${slug}__specialty"><?php echo esc_html( $specialty ); ?></p>
+        <?php endif; ?>
+
+        <?php if ( $bio ) : ?>
+          <div class="${slug}__bio wysiwyg--content">
+            <?php echo wp_kses_post( $bio ); ?>
+          </div>
+        <?php endif; ?>
+
+        <?php if ( $cta_label && $cta_link ) : ?>
+          <a class="${slug}__cta" href="<?php echo esc_url( $cta_link ); ?>">
+            <?php echo esc_html( $cta_label ); ?>
+          </a>
+        <?php endif; ?>
+      </div>
+    </div>`,
+
+    extraCss: ({ slug }) => `
+/* ═══════════════════════════════════════════════════════════════════
+ * Doctor Profile Section — image-left + content-right two-column card.
+ *   All selectors below are scoped under .${slug} (BEM with parent
+ *   ancestor) so styles cannot leak to any other block or section.
+ * ═══════════════════════════════════════════════════════════════════ */
+.${slug} {
+  background-color: #ffffff;
+  font-family: var(--paragraph-font, "Lato", system-ui, sans-serif);
+  color: #404040;
+}
+
+.${slug} .${slug}__inner {
+  width: 100%;
+  max-width: 90%; /* percentage cap — never absolute px */
+  margin: 0 auto;
+}
+
+/* Two-column row — agency convention: percentage widths only.
+   align-items: stretch makes the image column track the body column's
+   height so the photo always matches whatever copy length the editor
+   enters. */
+.${slug} .${slug}__layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 60px;
+  width: 100%;
+}
+
+.${slug} .${slug}__image-wrap,
+.${slug} .${slug}__body {
+  width: 100%;
+  max-width: 50%;
+  flex: 0 1 calc(50% - 30px); /* 50% minus half the gap so two columns + gap fit on one row */
+}
+
+/* Image-side floor — when the body is shorter than this, the image
+   keeps a tall portrait instead of collapsing. When the body is taller,
+   align-items: stretch pulls the image past the floor automatically. */
+.${slug} .${slug}__image-wrap {
+  position: relative;
+  display: flex;
+  min-height: 480px;
+}
+
+.${slug} .${slug}__image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.${slug} .${slug}__body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px 0;
+}
+
+.${slug} .${slug}__heading {
+  font-family: var(--heading-font, "Lato", system-ui, sans-serif);
+  font-weight: 800;
+  font-size: clamp(28px, 3.5vw, 40px);
+  line-height: 1.2;
+  color: #1b2540;
+  margin: 0;
+  width: 100%;
+}
+
+/* Credentials — inline pill list with dot separators between items. */
+.${slug} .${slug}__credentials {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #6b6b6b;
+}
+
+.${slug} .${slug}__credentials-item {
+  position: relative;
+  padding-right: 14px;
+}
+
+.${slug} .${slug}__credentials-item:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  background-color: #c5c5c5;
+  border-radius: 50%;
+}
+
+.${slug} .${slug}__specialty {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2d7fb8;
+  margin: 0;
+  width: 100%;
+}
+
+.${slug} .${slug}__bio {
+  width: 100%;
+  max-width: 65ch; /* paragraph readability cap, character-relative */
+  font-size: 17px;
+  line-height: 28px;
+}
+
+.${slug} .${slug}__bio p {
+  margin: 0 0 12px;
+}
+
+.${slug} .${slug}__bio p:last-child {
+  margin-bottom: 0;
+}
+
+.${slug} .${slug}__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  padding: 18px 36px;
+  background-color: #2d7fb8;
+  color: #ffffff;
+  font-family: var(--heading-font, "Lato", system-ui, sans-serif);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-radius: 999px;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.${slug} .${slug}__cta:hover,
+.${slug} .${slug}__cta:focus-visible {
+  background-color: #1f6193;
+  transform: translateY(-1px);
+}
+
+.${slug} .${slug}__cta:focus-visible {
+  outline: 2px solid #1b2540;
+  outline-offset: 3px;
+}
+
+/* ─── Mobile (≤ 767px) — stacked, image full-width above body, no min-height ── */
+@media (max-width: 767px) {
+  .${slug} .${slug}__layout {
+    gap: 28px;
+  }
+  .${slug} .${slug}__image-wrap,
+  .${slug} .${slug}__body {
+    max-width: 100%;
+    flex: 0 1 100%;
+  }
+  /* Mobile: drop the desktop floor — image returns to its natural
+     aspect ratio above the body. */
+  .${slug} .${slug}__image-wrap {
+    min-height: auto;
+    aspect-ratio: 4 / 5;
+  }
+  .${slug} .${slug}__image {
+    height: 100%;
+  }
+  .${slug} .${slug}__body {
+    padding: 0;
+    gap: 14px;
+  }
+  .${slug} .${slug}__cta {
+    width: 100%;
+    padding: 16px 28px;
   }
 }
 `,
